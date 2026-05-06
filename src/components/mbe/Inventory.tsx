@@ -13,8 +13,8 @@ export const Inventory = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", sku: "", stock: "", threshold: "", price: "" });
 
-  const totalValue = inventory.reduce((s, i) => s + i.stock * i.price, 0);
-  const low = inventory.filter((i) => i.stock <= i.threshold);
+  const totalValue = inventory.filter((i) => !i.isProduct).reduce((s, i) => s + i.stock * i.price, 0);
+  const low = inventory.filter((i) => !i.isProduct && i.stock <= i.threshold);
 
   return (
     <div className="fade-in">
@@ -72,7 +72,7 @@ export const Inventory = () => {
         <div className="text-sm font-medium mb-3">Stock</div>
         <div className="divide-y divide-border">
           {inventory.map((i) => {
-            const isLow = i.stock <= i.threshold;
+            const isLow = !i.isProduct && i.stock <= i.threshold;
             return (
               <div key={i.id} className="flex items-center gap-4 py-3">
                 <div className="h-10 w-10 rounded-lg bg-secondary grid place-items-center"><Package className="h-4 w-4" /></div>
