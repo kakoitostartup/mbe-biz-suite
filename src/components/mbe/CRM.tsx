@@ -33,6 +33,9 @@ export const CRM = () => {
         subtitle="Pipeline synced with Finance — completed deals issue receipts automatically."
         action={
           <div className="flex items-center gap-2">
+            <Button variant="secondary" className="h-9" onClick={() => { setCalCtx({}); setCalOpen(true); }}>
+              <CalendarDays className="h-4 w-4 mr-1" /> Calendar
+            </Button>
             <CustomizeStages />
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Add deal</Button></DialogTrigger>
