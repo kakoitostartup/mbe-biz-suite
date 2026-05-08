@@ -231,41 +231,6 @@ const RevenuePie = ({ receipts, activeIdx, setActiveIdx }: { receipts: any[]; ac
     </Panel>
   );
 };
-        <Panel>
-          <div className="text-sm font-medium mb-3 flex items-center gap-2"><ReceiptText className="h-4 w-4" /> Recent receipts</div>
-          <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
-            {receipts.slice(0, 8).map((r) => (
-              <div key={r.id} className={`flex items-center gap-3 p-2.5 rounded-lg bg-secondary/50 ${r.voided ? "opacity-50" : ""}`}>
-                <div className="h-8 w-8 rounded-lg bg-foreground text-background grid place-items-center"><ArrowUpRight className="h-4 w-4" /></div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium">{r.number} {r.voided && <span className="text-destructive">• voided</span>}</div>
-                  <div className="text-[10px] text-muted-foreground">{r.lines.map((l) => `${l.qty}× ${l.name}`).join(" • ")}</div>
-                </div>
-                <div className="text-xs font-semibold">${r.total.toFixed(2)}</div>
-                <div className="text-[10px] text-muted-foreground">{format(parseISO(r.createdAt), "HH:mm")}</div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel>
-          <div className="text-sm font-medium mb-3 flex items-center gap-2"><Activity className="h-4 w-4" /> Activity log</div>
-          <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
-            {audit.slice(0, 12).map((a) => (
-              <div key={a.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-secondary/40 hairline">
-                <span className={`mt-1 h-2 w-2 rounded-full ${a.severity === "alert" ? "bg-destructive" : a.severity === "warn" ? "bg-[hsl(var(--stage-progress))]" : "bg-muted-foreground"}`} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium">{a.action} <span className="text-muted-foreground font-normal">— {a.detail}</span></div>
-                  <div className="text-[10px] text-muted-foreground">{format(parseISO(a.at), "MMM d • HH:mm")} • {a.actor}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </div>
-    </div>
-  );
-};
 
 const QuickExpense = ({ onAdd }: { onAdd: (t: any) => void }) => {
   const [open, setOpen] = useState(false);
