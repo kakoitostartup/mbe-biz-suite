@@ -220,6 +220,26 @@ export const POS = () => {
           </div>
         </Panel>
       </div>
+      </div>
+
+      <Dialog open={!!helpItem} onOpenChange={(v) => !v && setHelpItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="h-4 w-4" />
+              How to prepare · {inventory.find((i) => i.id === helpItem)?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <ol className="space-y-2 text-sm">
+            {(prepInstructions[helpItem || ""] || "").split("\n").filter(Boolean).map((line, i) => (
+              <li key={i} className="flex gap-3 p-3 rounded-lg bg-secondary/40 hairline">
+                <span className="h-6 w-6 shrink-0 rounded-full bg-foreground text-background grid place-items-center text-[11px] font-semibold">{i + 1}</span>
+                <span className="leading-relaxed pt-0.5">{line.replace(/^\d+\.\s*/, "")}</span>
+              </li>
+            ))}
+          </ol>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
