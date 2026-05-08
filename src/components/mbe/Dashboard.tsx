@@ -11,7 +11,10 @@ import { ArrowUpRight, ReceiptText, Wallet, Activity, Plus, ShoppingBag, UserChe
 import { format, parseISO, isToday, subDays, startOfDay, differenceInMinutes } from "date-fns";
 
 export const Dashboard = ({ onGoto }: { onGoto?: (s: string) => void }) => {
-  const { receipts, transactions, inventory, audit, addTransaction } = useStore();
+  const { receipts, transactions, inventory, audit, addTransaction, staff, shifts } = useStore();
+  const [activeIdx, setActiveIdx] = useState<number>(0);
+
+  const onShift = shifts.filter((sh) => !sh.end).map((sh) => ({ shift: sh, person: staff.find((p) => p.id === sh.staffId)! })).filter((x) => x.person);
 
   const todayReceipts = receipts.filter((r) => !r.voided && isToday(parseISO(r.createdAt)));
   const revenueToday = todayReceipts.reduce((s, r) => s + r.total, 0);
