@@ -85,7 +85,53 @@ export type AuditEvent = {
   severity: "info" | "warn" | "alert";
 };
 
+export type Appointment = {
+  id: string;
+  dealId?: string;
+  title: string;
+  clients: string[]; // client names; multiple allowed at same slot
+  start: string; // ISO
+  duration: number; // minutes (multiples of 15)
+  color?: string; // stage color id
+  note?: string;
+};
+
+export type StaffRole = "owner" | "manager" | "cashier" | "barista" | "sales";
+
+export type Staff = {
+  id: string;
+  name: string;
+  role: StaffRole;
+  phone?: string;
+  email?: string;
+  pin: string; // 8-digit
+  hiredAt: string;
+  kpiTarget?: number; // monthly deals
+};
+
+export type Shift = {
+  id: string;
+  staffId: string;
+  start: string;
+  end?: string;
+};
+
+export type PremiumPlan = "Starter" | "Pro" | "Business" | "Enterprise";
+
+export type Subscription = {
+  plan: PremiumPlan;
+  priceMonthly: number;
+  status: "active" | "trial" | "past_due" | "canceled";
+  startedAt: string;
+  renewsAt: string; // next charge
+  cardBrand: string;
+  cardLast4: string;
+  cardExpiry: string; // MM/YY
+  autoRenew: boolean;
+};
+
 const uid = () => Math.random().toString(36).slice(2, 9);
+const pin = () => Math.floor(10_000_000 + Math.random() * 89_999_999).toString();
 
 type State = {
   stages: Stage[];
