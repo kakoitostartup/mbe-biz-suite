@@ -131,12 +131,23 @@ export const POS = () => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filtered.map((p) => (
-              <button key={p.id} onClick={() => addToCart(p.id)}
-                className="rounded-xl bg-secondary/50 hairline p-4 text-left hover:bg-secondary transition-all active:scale-[0.98]">
-                <div className="text-sm font-medium truncate">{p.name}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{p.sku}</div>
-                <div className="mt-3 text-lg font-semibold">${p.price.toFixed(2)}</div>
-              </button>
+              <div key={p.id} className="relative group">
+                <button onClick={() => addToCart(p.id)}
+                  className="w-full rounded-xl bg-secondary/50 hairline p-4 text-left hover:bg-secondary transition-all active:scale-[0.98]">
+                  <div className="text-sm font-medium truncate pr-6">{p.name}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{p.sku}</div>
+                  <div className="mt-3 text-lg font-semibold">${p.price.toFixed(2)}</div>
+                </button>
+                {prepInstructions[p.id] && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setHelpItem(p.id); }}
+                    className="absolute top-2 right-2 h-6 w-6 grid place-items-center rounded-full bg-background/70 hover:bg-foreground hover:text-background text-muted-foreground transition-all"
+                    title="How to prepare"
+                  >
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             ))}
             {filtered.length === 0 && <div className="col-span-full text-xs text-muted-foreground py-8 text-center">No products match.</div>}
           </div>
