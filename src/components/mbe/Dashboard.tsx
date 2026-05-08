@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { ArrowDownRight, ArrowUpRight, ReceiptText, Wallet, AlertTriangle, Activity, Plus, ShoppingBag } from "lucide-react";
-import { format, parseISO, isToday, subDays, startOfDay } from "date-fns";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Sector } from "recharts";
+import { ArrowUpRight, ReceiptText, Wallet, Activity, Plus, ShoppingBag, UserCheck, Clock } from "lucide-react";
+import { format, parseISO, isToday, subDays, startOfDay, differenceInMinutes } from "date-fns";
 
 export const Dashboard = ({ onGoto }: { onGoto?: (s: string) => void }) => {
   const { receipts, transactions, inventory, audit, addTransaction } = useStore();
