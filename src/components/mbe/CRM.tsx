@@ -23,6 +23,8 @@ export const CRM = () => {
   const { stages, deals, addDeal, moveDeal } = useStore();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ client: "", title: "", amount: "", stageId: stages[0]?.id ?? "new" });
+  const [calOpen, setCalOpen] = useState(false);
+  const [calCtx, setCalCtx] = useState<{ client?: string; title?: string; dealId?: string }>({});
 
   return (
     <div className="fade-in">
