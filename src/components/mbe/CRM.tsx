@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Settings2, Pencil } from "lucide-react";
+import { Plus, Settings2, Pencil, CalendarDays } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { CalendarDialog } from "./Calendar";
 
 const colorOptions = [
   { id: "stage-new", label: "Red" },
