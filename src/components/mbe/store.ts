@@ -143,6 +143,12 @@ type State = {
   heldOrders: HeldOrder[];
   receipts: Receipt[];
   audit: AuditEvent[];
+  appointments: Appointment[];
+  staff: Staff[];
+  shifts: Shift[];
+  subscription: Subscription;
+  prepInstructions: Record<string, string>; // itemId -> markdown
+  recipeNotes?: string;
 
   // crm
   addStage: () => void;
@@ -150,6 +156,11 @@ type State = {
   removeStage: (id: string) => void;
   addDeal: (d: Omit<Deal, "id" | "createdAt">) => void;
   moveDeal: (id: string, stageId: string) => void;
+
+  // appointments
+  addAppointment: (a: Omit<Appointment, "id">) => void;
+  updateAppointment: (id: string, patch: Partial<Appointment>) => void;
+  removeAppointment: (id: string) => void;
 
   // finance
   addTransaction: (t: Omit<Transaction, "id">) => void;
@@ -164,7 +175,7 @@ type State = {
   toggleTask: (id: string) => void;
   removeTask: (id: string) => void;
 
-  // customers
+  // customers (kept in store, UI tab removed)
   addCustomer: (c: Omit<Customer, "id" | "createdAt">) => Customer;
   updateCustomer: (id: string, patch: Partial<Customer>) => void;
 
@@ -174,6 +185,17 @@ type State = {
   removeHeldOrder: (id: string) => void;
   checkoutOrder: (lines: CartLine[], customerId?: string) => Receipt;
   voidReceipt: (id: string, reason: string) => void;
+
+  // staff
+  addStaff: (s: Omit<Staff, "id" | "hiredAt" | "pin"> & { pin?: string }) => Staff;
+  updateStaff: (id: string, patch: Partial<Staff>) => void;
+  removeStaff: (id: string) => void;
+  resetPin: (id: string) => string;
+  clockIn: (staffId: string) => void;
+  clockOut: (staffId: string) => void;
+
+  // subscription
+  updateSubscription: (patch: Partial<Subscription>) => void;
 
   // audit
   log: (e: Omit<AuditEvent, "id" | "at">) => void;
