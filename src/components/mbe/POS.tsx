@@ -10,7 +10,8 @@ import { format, parseISO } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
 export const POS = () => {
-  const { inventory, holdOrder, heldOrders, resumeOrder, removeHeldOrder, checkoutOrder, customers, addCustomer, log } = useStore();
+  const { inventory, holdOrder, heldOrders, resumeOrder, removeHeldOrder, checkoutOrder, customers, addCustomer, log, prepInstructions } = useStore();
+  const [helpItem, setHelpItem] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [query, setQuery] = useState("");
   const [customer, setCustomer] = useState<Customer | undefined>();
