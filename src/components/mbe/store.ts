@@ -388,5 +388,35 @@ export const useStore = create<State>((set, get) => ({
     if (r) get().log({ actor: "cashier-1", action: "Receipt voided", detail: `${r.number} • ${reason}`, severity: "alert" });
   },
 
+
+  addAppointment: (a) => set((s) => ({ appointments: [...s.appointments, { ...a, id: uid() }] })),
+  updateAppointment: (id, patch) => set((s) => ({ appointments: s.appointments.map((x) => x.id === id ? { ...x, ...patch } : x) })),
+  removeAppointment: (id) => set((s) => ({ appointments: s.appointments.filter((x) => x.id !== id) })),
+
+  addStaff: (s) => {
+    const st: Staff = { ...s, id: uid(), pin: s.pin ?? pin(), hiredAt: new Date().toISOString() };
+    set((state) => ({ staff: [...state.staff, st] }));
+    get().log({ actor: "owner", action: "Staff added", detail: `${st.name} (${st.role})`, severity: "info" });
+    return st;
+  },
+  updateStaff: (id, patch) => set((s) => ({ staff: s.staff.map((x) => x.id === id ? { ...x, ...patch } : x) })),
+  removeStaff: (id) => set((s) => ({ staff: s.staff.filter((x) => x.id !== id) })),
+  resetPin: (id) => {
+    const np = pin();
+    set((s) => ({ staff: s.staff.map((x) => x.id === id ? { ...x, pin: np } : x) }));
+    get().log({ actor: "owner", action: "PIN reset", detail: id, severity: "warn" });
+    return np;
+  },
+  clockIn: (staffId) => {
+    const open = get().shifts.find((sh) => sh.staffId === staffId && !sh.end);
+    if (open) return;
+    set((s) => ({ shifts: [...s.shifts, { id: uid(), staffId, start: new Date().toISOString() }] }));
+  },
+  clockOut: (staffId) => set((s) => ({
+    shifts: s.shifts.map((sh) => (sh.staffId === staffId && !sh.end) ? { ...sh, end: new Date().toISOString() } : sh),
+  })),
+
+  updateSubscription: (patch) => set((s) => ({ subscription: { ...s.subscription, ...patch } })),
+
   log: (e) => set((s) => ({ audit: [{ ...e, id: uid(), at: new Date().toISOString() }, ...s.audit].slice(0, 100) })),
 }));
