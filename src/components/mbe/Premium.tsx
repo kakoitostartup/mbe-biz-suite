@@ -10,12 +10,12 @@ import { Crown, CreditCard, Calendar, Sparkles, Check, RefreshCw } from "lucide-
 import { differenceInDays, format, parseISO } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
-const PLANS = [
+const PLANS: { id: "Starter" | "Pro" | "Business" | "Enterprise"; price: number; features: string[]; popular?: boolean }[] = [
   { id: "Starter", price: 19, features: ["1 location", "POS + Inventory", "Email support"] },
   { id: "Pro", price: 49, features: ["Up to 5 locations", "CRM + Calendar", "Priority support", "Advanced analytics"], popular: true },
   { id: "Business", price: 119, features: ["Unlimited locations", "Multi-currency", "API access", "Dedicated manager"] },
   { id: "Enterprise", price: 299, features: ["SLA 99.99%", "SSO + audit", "Custom integrations", "On-prem option"] },
-] as const;
+];
 
 export const Premium = () => {
   const { subscription, updateSubscription } = useStore();
