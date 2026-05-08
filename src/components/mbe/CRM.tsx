@@ -110,6 +110,14 @@ export const CRM = () => {
           );
         })}
       </div>
+
+      <CalendarDialog
+        open={calOpen}
+        onOpenChange={setCalOpen}
+        defaultClient={calCtx.client}
+        defaultTitle={calCtx.title}
+        dealId={calCtx.dealId}
+      />
     </div>
   );
 };
