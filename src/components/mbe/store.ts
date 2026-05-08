@@ -268,6 +268,42 @@ export const useStore = create<State>((set, get) => ({
     { id: uid(), at: minsAgo(18), actor: "cashier-1", action: "Discount applied", detail: "Z-1002 • -10%", severity: "warn" },
     { id: uid(), at: minsAgo(40), actor: "system", action: "Low stock", detail: "Vanilla syrup near threshold", severity: "alert" },
   ],
+  appointments: (() => {
+    const base = new Date(); base.setHours(10, 0, 0, 0);
+    const t = (h: number, m: number) => { const d = new Date(base); d.setHours(h, m, 0, 0); return d.toISOString(); };
+    return [
+      { id: uid(), title: "Brand kickoff", clients: ["Nova Studio"], start: t(10, 0), duration: 45, color: "stage-progress" },
+      { id: uid(), title: "Discovery call", clients: ["Acme Corp", "Helix Labs"], start: t(11, 30), duration: 30, color: "stage-new" },
+      { id: uid(), title: "Contract review", clients: ["Helix Labs"], start: t(14, 15), duration: 60, color: "stage-completed" },
+    ];
+  })(),
+  staff: [
+    { id: "owner", name: "Alex Mercer", role: "owner", phone: "+1 555 0001", email: "alex@mbe.app", pin: pin(), hiredAt: daysAgo(420), kpiTarget: 30 },
+    { id: "cashier-1", name: "Mia Chen", role: "cashier", phone: "+1 555 0188", pin: pin(), hiredAt: daysAgo(60), kpiTarget: 0 },
+    { id: "sales-1", name: "Daria Volkova", role: "sales", phone: "+1 555 0212", pin: pin(), hiredAt: daysAgo(180), kpiTarget: 12 },
+    { id: "barista-1", name: "Tom Reyes", role: "barista", phone: "+1 555 0233", pin: pin(), hiredAt: daysAgo(45), kpiTarget: 0 },
+  ],
+  shifts: [
+    { id: uid(), staffId: "cashier-1", start: new Date(today.getTime() - 3600_000 * 4).toISOString() },
+    { id: uid(), staffId: "barista-1", start: new Date(today.getTime() - 3600_000 * 2.5).toISOString() },
+  ],
+  subscription: {
+    plan: "Pro",
+    priceMonthly: 49,
+    status: "active",
+    startedAt: daysAgo(120),
+    renewsAt: new Date(today.getTime() + 86400000 * 14).toISOString(),
+    cardBrand: "Visa",
+    cardLast4: "4242",
+    cardExpiry: "08/28",
+    autoRenew: true,
+  },
+  prepInstructions: {
+    [cappId]: "1. Grind 18g of beans (medium-fine)\n2. Pull a double espresso (~25s, 36g out)\n3. Steam 200ml milk to 65°C, microfoam\n4. Pour into 12oz cup — heart latte art\n5. Serve immediately",
+    [espId]: "1. Grind 9g of beans (fine)\n2. Tamp evenly, 30lb pressure\n3. Pull single shot, 22–28s\n4. Serve in warm demitasse cup",
+    [latteId]: "1. Pull double espresso (18g in / 36g out)\n2. Add 15ml vanilla syrup to cup\n3. Steam 220ml milk silky\n4. Pour latte art on top\n5. Sleeve cup, serve",
+    [croissantId]: "Reheat 90s at 160°C in convection oven. Serve on small plate with butter knife.",
+  },
 
   addStage: () => set((s) => ({ stages: [...s.stages, { id: uid(), label: "New Stage", color: "stage-progress" }] })),
   updateStage: (id, patch) => set((s) => ({ stages: s.stages.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
