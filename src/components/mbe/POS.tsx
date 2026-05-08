@@ -220,7 +220,6 @@ export const POS = () => {
           </div>
         </Panel>
       </div>
-      </div>
 
       <Dialog open={!!helpItem} onOpenChange={(v) => !v && setHelpItem(null)}>
         <DialogContent>
