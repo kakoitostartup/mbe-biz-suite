@@ -84,9 +84,16 @@ export const CRM = () => {
               </div>
               <div className="space-y-2">
                 {stageDeals.map((d) => (
-                  <div key={d.id} className="rounded-lg bg-secondary/60 p-3 hairline group">
-                    <div className="text-xs text-muted-foreground">{d.client}</div>
-                    <div className="text-sm font-medium">{d.title}</div>
+                  <div key={d.id} className="rounded-lg bg-secondary/60 p-3 hairline group relative">
+                    <button
+                      onClick={() => { setCalCtx({ client: d.client, title: d.title, dealId: d.id }); setCalOpen(true); }}
+                      className="absolute top-2 right-2 h-6 w-6 grid place-items-center rounded-md bg-background/60 hover:bg-foreground hover:text-background transition-all opacity-70 hover:opacity-100"
+                      title="Schedule appointment"
+                    >
+                      <CalendarDays className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="text-xs text-muted-foreground pr-7">{d.client}</div>
+                    <div className="text-sm font-medium pr-7">{d.title}</div>
                     <div className="mt-2 flex items-center justify-between">
                       <div className="text-sm font-semibold">${d.amount.toLocaleString()}</div>
                       <div className="text-[10px] text-muted-foreground">{format(parseISO(d.createdAt), "MMM d")}</div>
