@@ -10,8 +10,10 @@ import { StaffPage } from "@/components/mbe/Staff";
 import { Premium } from "@/components/mbe/Premium";
 import { Referral } from "@/components/mbe/Referral";
 import { Reports } from "@/components/mbe/Reports";
+import { LiveOrders } from "@/components/mbe/LiveOrders";
 import { Profile, SettingsPage } from "@/components/mbe/Misc";
-import { Bell, Search } from "lucide-react";
+import { HeaderBell } from "@/components/mbe/HeaderBell";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const Index = () => {
@@ -27,9 +29,7 @@ const Index = () => {
             <Input placeholder="Search deals, items, transactions…" className="pl-9 h-9 bg-secondary border-transparent" />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <button className="h-9 w-9 rounded-lg bg-secondary grid place-items-center hover:bg-accent transition-colors">
-              <Bell className="h-4 w-4" />
-            </button>
+            <HeaderBell />
             <div className="h-9 w-9 rounded-lg bg-primary text-primary-foreground grid place-items-center text-xs font-semibold">AM</div>
           </div>
         </header>
@@ -37,6 +37,7 @@ const Index = () => {
         <main className="flex-1 p-8 overflow-auto">
           {active === "dashboard" && <Dashboard onGoto={(s) => setActive(s as Section)} />}
           {active === "pos" && <POS />}
+          {active === "live" && <LiveOrders />}
           {active === "finance" && <Finance />}
           {active === "inventory" && <Inventory />}
           {active === "crm" && <CRM />}
@@ -46,7 +47,7 @@ const Index = () => {
           {active === "referral" && <Referral />}
           {active === "reports" && <Reports />}
           {active === "profile" && <Profile />}
-          {active === "settings" && <SettingsPage />}
+          {active === "settings" && <SettingsPage onGoto={(s) => setActive(s as Section)} />}
         </main>
       </div>
     </div>

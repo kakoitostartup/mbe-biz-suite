@@ -30,11 +30,11 @@ export const CRM = () => {
     <div className="fade-in">
       <SectionHeader
         title="CRM"
-        subtitle="Pipeline synced with Finance — completed deals issue receipts automatically."
+        subtitle="Pipeline synced with Finance — completed deals issue receipts automatically. The calendar shows client-linked appointments and tasks."
         action={
           <div className="flex items-center gap-2">
             <Button variant="secondary" className="h-9" onClick={() => { setCalCtx({}); setCalOpen(true); }}>
-              <CalendarDays className="h-4 w-4 mr-1" /> Calendar
+              <CalendarDays className="h-4 w-4 mr-1" /> Client calendar
             </Button>
             <CustomizeStages />
             <Dialog open={open} onOpenChange={setOpen}>
@@ -117,6 +117,7 @@ export const CRM = () => {
         defaultClient={calCtx.client}
         defaultTitle={calCtx.title}
         dealId={calCtx.dealId}
+        clientLinkedOnly
       />
     </div>
   );

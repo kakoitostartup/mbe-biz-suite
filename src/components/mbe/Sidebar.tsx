@@ -1,15 +1,17 @@
 import { Logo } from "./Logo";
-import { LayoutGrid, Wallet, Boxes, Users, ListChecks, Settings, User, ShoppingBag, Activity, Crown, UserCog, Gift, FileBarChart2 } from "lucide-react";
+import { useStore } from "./store";
+import { LayoutGrid, Wallet, Boxes, Users, ListChecks, Settings, User, ShoppingBag, Activity, Crown, UserCog, Gift, FileBarChart2, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type Section =
-  | "dashboard" | "pos" | "finance" | "inventory" | "crm" | "tasks"
+  | "dashboard" | "pos" | "live" | "finance" | "inventory" | "crm" | "tasks"
   | "staff" | "premium" | "referral" | "reports"
   | "profile" | "settings";
 
-const items: { id: Section; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const baseItems: { id: Section; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "dashboard", label: "Pulse", icon: Activity },
   { id: "pos", label: "POS", icon: ShoppingBag },
+  { id: "live", label: "Live orders", icon: Radio },
   { id: "finance", label: "Finance", icon: Wallet },
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "crm", label: "CRM", icon: Users },
@@ -20,12 +22,16 @@ const items: { id: Section; label: string; icon: React.ComponentType<{ className
   { id: "premium", label: "Premium", icon: Crown },
 ];
 
-const bottom: typeof items = [
+const bottom: typeof baseItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export const Sidebar = ({ active, onChange }: { active: Section; onChange: (s: Section) => void }) => {
+  const liveEnabled = useStore((s) => s.settings.liveOrdersEnabled);
+  const openOrders = useStore((s) => s.heldOrders.length);
+  const items = baseItems.filter((it) => it.id !== "live" || liveEnabled);
+
   return (
     <aside className="w-[240px] shrink-0 h-screen sticky top-0 panel border-r border-border flex flex-col">
       <div className="px-6 pt-7 pb-5 border-b border-border flex items-center justify-center">
@@ -38,6 +44,7 @@ export const Sidebar = ({ active, onChange }: { active: Section; onChange: (s: S
           const Icon = it.icon;
           const isActive = active === it.id;
           const isPremium = it.id === "premium";
+          const isLive = it.id === "live";
           return (
             <button
               key={it.id}
@@ -51,10 +58,13 @@ export const Sidebar = ({ active, onChange }: { active: Section; onChange: (s: S
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
               )}
             >
-              <Icon className={cn("h-4 w-4", isPremium && !isActive && "text-[hsl(var(--stage-progress))]")} />
+              <Icon className={cn("h-4 w-4", isPremium && !isActive && "text-[hsl(var(--stage-progress))]", isLive && !isActive && "text-[hsl(var(--stage-completed))]")} />
               <span className="font-medium tracking-tight">{it.label}</span>
               {isActive && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground/80" />}
               {isPremium && !isActive && <span className="ml-auto text-[9px] uppercase tracking-widest text-[hsl(var(--stage-progress))]">PRO</span>}
+              {isLive && !isActive && openOrders > 0 && (
+                <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[hsl(var(--stage-completed))]/20 text-[hsl(var(--stage-completed))]">{openOrders}</span>
+              )}
             </button>
           );
         })}

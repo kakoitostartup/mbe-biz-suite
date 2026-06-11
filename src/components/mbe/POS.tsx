@@ -4,23 +4,34 @@ import { Panel, SectionHeader } from "./ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Minus, X, PauseCircle, PlayCircle, ReceiptText, User, Trash2, Search, HelpCircle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Plus, Minus, X, PauseCircle, PlayCircle, ReceiptText, User, Trash2, Search, HelpCircle,
+  Banknote, CreditCard, Building2, Check, ChefHat, MessageSquare,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
 export const POS = () => {
-  const { inventory, holdOrder, heldOrders, resumeOrder, removeHeldOrder, checkoutOrder, customers, addCustomer, log, prepInstructions } = useStore();
+  const {
+    inventory, holdOrder, heldOrders, resumeOrder, removeHeldOrder, updateHeldOrder,
+    checkoutOrder, customers, addCustomer, log, prepInstructions, paymentMethods,
+  } = useStore();
   const [helpItem, setHelpItem] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [query, setQuery] = useState("");
   const [customer, setCustomer] = useState<Customer | undefined>();
   const [holdOpen, setHoldOpen] = useState(false);
   const [holdLabel, setHoldLabel] = useState("");
+  const [holdComment, setHoldComment] = useState("");
   const [custOpen, setCustOpen] = useState(false);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
+  const [paymentId, setPaymentId] = useState<string>(() => paymentMethods.find((p) => p.enabled)?.id || paymentMethods[0]?.id || "");
+  const [bankOpen, setBankOpen] = useState(false);
 
   const products = inventory.filter((i) => i.isProduct);
   const filtered = useMemo(
@@ -30,13 +41,13 @@ export const POS = () => {
 
   const total = cart.reduce((s, l) => s + l.price * l.qty, 0);
 
-  const addToCart = (id: string) => {
+  const addToCart = (id: string, qty = 1) => {
     const p = inventory.find((i) => i.id === id);
     if (!p) return;
     setCart((c) => {
       const exists = c.find((l) => l.itemId === id);
-      if (exists) return c.map((l) => (l.itemId === id ? { ...l, qty: l.qty + 1 } : l));
-      return [...c, { itemId: id, name: p.name, price: p.price, qty: 1 }];
+      if (exists) return c.map((l) => (l.itemId === id ? { ...l, qty: l.qty + qty } : l));
+      return [...c, { itemId: id, name: p.name, price: p.price, qty }];
     });
   };
 
@@ -44,10 +55,7 @@ export const POS = () => {
     setCart((c) => c.flatMap((l) => {
       if (l.itemId !== id) return [l];
       const nq = l.qty + delta;
-      if (nq <= 0) {
-        log({ actor: "cashier-1", action: "Item removed from cart", detail: l.name, severity: "warn" });
-        return [];
-      }
+      if (nq <= 0) { log({ actor: "cashier-1", action: "Item removed from cart", detail: l.name, severity: "warn" }); return []; }
       return [{ ...l, qty: nq }];
     }));
   };
@@ -60,17 +68,17 @@ export const POS = () => {
 
   const checkout = () => {
     if (cart.length === 0) return;
-    const r = checkoutOrder(cart, customer?.id);
-    toast({ title: `Receipt ${r.number}`, description: `Total $${r.total.toFixed(2)}` });
-    setCart([]);
-    setCustomer(undefined);
+    const r = checkoutOrder(cart, customer?.id, paymentId);
+    const pm = paymentMethods.find((p) => p.id === paymentId);
+    toast({ title: `Receipt ${r.number}`, description: `${pm?.label || "Payment"} • $${r.total.toFixed(2)}` });
+    setCart([]); setCustomer(undefined);
   };
 
   const onHold = () => {
     if (cart.length === 0) return;
-    holdOrder(holdLabel || `Order #${heldOrders.length + 1}`, cart, customer?.id);
-    setCart([]); setCustomer(undefined); setHoldLabel(""); setHoldOpen(false);
-    toast({ title: "Order held", description: "Resume it from the held panel." });
+    holdOrder(holdLabel || `Order #${heldOrders.length + 1}`, cart, customer?.id, holdComment || undefined);
+    setCart([]); setCustomer(undefined); setHoldLabel(""); setHoldComment(""); setHoldOpen(false);
+    toast({ title: "Order held", description: "Resume it from the held panel or the live dashboard." });
   };
 
   const resume = (id: string) => {
@@ -84,42 +92,18 @@ export const POS = () => {
 
   const findOrCreateCustomer = () => {
     const existing = customers.find((c) => c.phone.replace(/\s+/g, "") === phone.replace(/\s+/g, ""));
-    if (existing) {
-      setCustomer(existing);
-    } else {
-      const c = addCustomer({ phone, name, note });
-      setCustomer(c);
-    }
+    if (existing) setCustomer(existing);
+    else setCustomer(addCustomer({ phone, name, note }));
     setPhone(""); setName(""); setNote(""); setCustOpen(false);
   };
+
+  const enabledMethods = paymentMethods.filter((p) => p.enabled);
 
   return (
     <div className="fade-in">
       <SectionHeader
         title="POS Terminal"
-        subtitle="Tap to sell. Hold orders, attach customers, auto-deduct ingredients."
-        action={
-          <div className="flex gap-2">
-            <Dialog open={custOpen} onOpenChange={setCustOpen}>
-              <DialogTrigger asChild>
-                <Button variant="secondary" className="h-9">
-                  <User className="h-4 w-4 mr-1" /> {customer ? customer.name || customer.phone : "Attach customer"}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Customer</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 …" /></div>
-                  <div><Label>Name (optional)</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-                  <div><Label>Note (allergies, preferences…)</Label><Input value={note} onChange={(e) => setNote(e.target.value)} /></div>
-                </div>
-                <DialogFooter>
-                  <Button onClick={findOrCreateCustomer} disabled={!phone}>Find / Create</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        }
+        subtitle="Tap to sell. Quantity in one tap, tech cards on call, ingredients auto-deducted."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
@@ -131,23 +115,13 @@ export const POS = () => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filtered.map((p) => (
-              <div key={p.id} className="relative group">
-                <button onClick={() => addToCart(p.id)}
-                  className="w-full rounded-xl bg-secondary/50 hairline p-4 text-left hover:bg-secondary transition-all active:scale-[0.98]">
-                  <div className="text-sm font-medium truncate pr-6">{p.name}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{p.sku}</div>
-                  <div className="mt-3 text-lg font-semibold">${p.price.toFixed(2)}</div>
-                </button>
-                {prepInstructions[p.id] && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setHelpItem(p.id); }}
-                    className="absolute top-2 right-2 h-6 w-6 grid place-items-center rounded-full bg-background/70 hover:bg-foreground hover:text-background text-muted-foreground transition-all"
-                    title="How to prepare"
-                  >
-                    <HelpCircle className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
+              <ProductTile
+                key={p.id}
+                item={p}
+                hasPrep={!!prepInstructions[p.id]}
+                onAdd={(qty) => addToCart(p.id, qty)}
+                onHelp={() => setHelpItem(p.id)}
+              />
             ))}
             {filtered.length === 0 && <div className="col-span-full text-xs text-muted-foreground py-8 text-center">No products match.</div>}
           </div>
@@ -162,6 +136,7 @@ export const POS = () => {
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{o.label}</div>
                       <div className="text-[10px] text-muted-foreground">{o.lines.length} items • {format(parseISO(o.createdAt), "HH:mm")}</div>
+                      {o.comment && <div className="text-[10px] text-foreground/70 truncate italic">“{o.comment}”</div>}
                     </div>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => resume(o.id)}><PlayCircle className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeHeldOrder(o.id)}><Trash2 className="h-3 w-3" /></Button>
@@ -172,16 +147,13 @@ export const POS = () => {
           )}
         </Panel>
 
-        {/* Cart */}
+        {/* Cart + checkout flow */}
         <Panel className="lg:col-span-2 flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-medium flex items-center gap-2"><ReceiptText className="h-4 w-4" /> Current order</div>
-            {customer && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-foreground text-background">{customer.name || customer.phone}</span>
-            )}
           </div>
-          <div className="flex-1 space-y-2 max-h-[420px] overflow-auto pr-1">
-            {cart.length === 0 && <div className="text-xs text-muted-foreground py-12 text-center">Tap a product to start.</div>}
+          <div className="flex-1 space-y-2 max-h-[360px] overflow-auto pr-1">
+            {cart.length === 0 && <div className="text-xs text-muted-foreground py-10 text-center">Tap a product to start.</div>}
             {cart.map((l) => (
               <div key={l.itemId} className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/50 hairline">
                 <div className="flex-1 min-w-0">
@@ -195,11 +167,14 @@ export const POS = () => {
               </div>
             ))}
           </div>
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
+
+          <div className="mt-4 pt-4 border-t border-border space-y-3">
+            <div className="flex items-center justify-between">
               <div className="text-xs text-muted-foreground">Total</div>
               <div className="text-2xl font-semibold">${total.toFixed(2)}</div>
             </div>
+
+            {/* 1. Charge + Hold */}
             <div className="grid grid-cols-2 gap-2">
               <Dialog open={holdOpen} onOpenChange={setHoldOpen}>
                 <DialogTrigger asChild>
@@ -209,36 +184,198 @@ export const POS = () => {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>Hold order</DialogTitle></DialogHeader>
-                  <div><Label>Label (e.g. "Table 4")</Label><Input value={holdLabel} onChange={(e) => setHoldLabel(e.target.value)} /></div>
+                  <div className="space-y-3">
+                    <div><Label>Label (e.g. "Table 4")</Label><Input value={holdLabel} onChange={(e) => setHoldLabel(e.target.value)} /></div>
+                    <div><Label>Comment (shown on live dashboard)</Label><Textarea value={holdComment} onChange={(e) => setHoldComment(e.target.value)} placeholder="Oat milk, extra hot…" /></div>
+                  </div>
                   <DialogFooter><Button onClick={onHold}>Hold</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button className="h-11" onClick={checkout} disabled={cart.length === 0}>
+              <Button className="h-11" onClick={checkout} disabled={cart.length === 0 || !paymentId}>
                 Charge ${total.toFixed(2)}
               </Button>
+            </div>
+
+            {/* 2. Customer / bonus card (after Charge) */}
+            <Dialog open={custOpen} onOpenChange={setCustOpen}>
+              <DialogTrigger asChild>
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary/40 hairline hover:bg-secondary text-left transition-colors">
+                  <div className="h-9 w-9 rounded-md bg-foreground text-background grid place-items-center">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium">{customer ? (customer.name || customer.phone) : "Attach bonus card"}</div>
+                    <div className="text-[10px] text-muted-foreground">{customer ? customer.note || "loyalty customer" : "Phone-based loyalty • optional"}</div>
+                  </div>
+                  {customer && <Check className="h-4 w-4 text-[hsl(var(--stage-completed))]" />}
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Bonus card / customer</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 …" /></div>
+                  <div><Label>Name (optional)</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                  <div><Label>Note (allergies, preferences…)</Label><Input value={note} onChange={(e) => setNote(e.target.value)} /></div>
+                </div>
+                <DialogFooter><Button onClick={findOrCreateCustomer} disabled={!phone}>Find / Create</Button></DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* 3. Payment method selector */}
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Payment method</div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {enabledMethods.map((m) => {
+                  const Icon = m.kind === "cash" ? Banknote : m.kind === "card" ? CreditCard : Building2;
+                  const isActive = paymentId === m.id;
+                  return (
+                    <button key={m.id} onClick={() => setPaymentId(m.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs transition-all ${isActive ? "bg-primary text-primary-foreground" : "bg-secondary/40 hairline hover:bg-secondary text-foreground/80"}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="truncate">{m.label}</span>
+                      {m.brand && <span className="ml-auto text-[9px] opacity-60">{m.brand}</span>}
+                    </button>
+                  );
+                })}
+                <BankConnectButton open={bankOpen} setOpen={setBankOpen} />
+              </div>
             </div>
           </div>
         </Panel>
       </div>
 
+      {/* Tech card / prep modal */}
       <Dialog open={!!helpItem} onOpenChange={(v) => !v && setHelpItem(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
-              How to prepare · {inventory.find((i) => i.id === helpItem)?.name}
+              <ChefHat className="h-4 w-4" />
+              Tech card · {inventory.find((i) => i.id === helpItem)?.name}
             </DialogTitle>
           </DialogHeader>
-          <ol className="space-y-2 text-sm">
-            {(prepInstructions[helpItem || ""] || "").split("\n").filter(Boolean).map((line, i) => (
-              <li key={i} className="flex gap-3 p-3 rounded-lg bg-secondary/40 hairline">
-                <span className="h-6 w-6 shrink-0 rounded-full bg-foreground text-background grid place-items-center text-[11px] font-semibold">{i + 1}</span>
-                <span className="leading-relaxed pt-0.5">{line.replace(/^\d+\.\s*/, "")}</span>
-              </li>
-            ))}
-          </ol>
+          <RecipeView itemId={helpItem} />
+          {prepInstructions[helpItem || ""] && (
+            <>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-4 mb-2">Preparation</div>
+              <ol className="space-y-2 text-sm">
+                {(prepInstructions[helpItem || ""] || "").split("\n").filter(Boolean).map((line, i) => (
+                  <li key={i} className="flex gap-3 p-3 rounded-lg bg-secondary/40 hairline">
+                    <span className="h-6 w-6 shrink-0 rounded-full bg-foreground text-background grid place-items-center text-[11px] font-semibold">{i + 1}</span>
+                    <span className="leading-relaxed pt-0.5">{line.replace(/^\d+\.\s*/, "")}</span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+const ProductTile = ({ item, hasPrep, onAdd, onHelp }: {
+  item: { id: string; name: string; sku: string; price: number };
+  hasPrep: boolean;
+  onAdd: (qty: number) => void;
+  onHelp: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [qty, setQty] = useState(1);
+
+  return (
+    <div className="relative group">
+      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setQty(1); }}>
+        <PopoverTrigger asChild>
+          <button className="w-full rounded-xl bg-secondary/50 hairline p-4 text-left hover:bg-secondary transition-all active:scale-[0.98]">
+            <div className="text-sm font-medium truncate pr-6">{item.name}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{item.sku}</div>
+            <div className="mt-3 text-lg font-semibold">${item.price.toFixed(2)}</div>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-3" align="start">
+          <div className="text-xs font-medium mb-2">{item.name}</div>
+          <div className="flex items-center gap-2 mb-3">
+            <Button size="icon" variant="secondary" className="h-9 w-9" onClick={() => setQty(Math.max(1, qty - 1))}><Minus className="h-3 w-3" /></Button>
+            <Input type="number" value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} className="h-9 text-center text-base font-semibold" />
+            <Button size="icon" variant="secondary" className="h-9 w-9" onClick={() => setQty(qty + 1)}><Plus className="h-3 w-3" /></Button>
+          </div>
+          <div className="grid grid-cols-4 gap-1 mb-3">
+            {[1, 2, 5, 10].map((n) => (
+              <button key={n} onClick={() => setQty(n)}
+                className={`h-7 rounded-md text-[11px] font-medium transition-colors ${qty === n ? "bg-foreground text-background" : "bg-secondary hover:bg-accent"}`}>{n}</button>
+            ))}
+          </div>
+          <Button className="w-full h-9" onClick={() => { onAdd(qty); setOpen(false); }}>
+            Add {qty} · ${(qty * item.price).toFixed(2)}
+          </Button>
+        </PopoverContent>
+      </Popover>
+      {hasPrep && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onHelp(); }}
+          className="absolute top-2 right-2 h-6 w-6 grid place-items-center rounded-full bg-background/70 hover:bg-foreground hover:text-background text-muted-foreground transition-all z-10"
+          title="Tech card"
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const RecipeView = ({ itemId }: { itemId: string | null }) => {
+  const { inventory } = useStore();
+  const item = inventory.find((i) => i.id === itemId);
+  if (!item) return null;
+  if (!item.recipe || item.recipe.length === 0) {
+    return <div className="text-xs text-muted-foreground italic">No tech card yet. Set ingredients in Inventory → POS products.</div>;
+  }
+  return (
+    <div className="rounded-lg bg-secondary/40 hairline p-3 space-y-1.5">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ingredients per serving</div>
+      {item.recipe.map((r, i) => {
+        const inv = inventory.find((x) => x.id === r.itemId);
+        return (
+          <div key={i} className="flex items-center justify-between text-xs">
+            <span>{inv?.name || "?"}</span>
+            <span className="tabular-nums text-muted-foreground">{r.qty} {inv?.unit}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const BankConnectButton = ({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) => {
+  const { addPaymentMethod } = useStore();
+  const [name, setName] = useState("");
+  const [brand, setBrand] = useState("");
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="flex items-center gap-2 px-3 py-2 rounded-md text-xs bg-secondary/40 hairline border-dashed hover:bg-secondary text-muted-foreground border border-dashed">
+          <Plus className="h-3.5 w-3.5" /> Connect bank
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Connect bank / acquirer</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="text-xs text-muted-foreground">Hook up a bank or acquiring provider. Integration credentials can be wired up later — for now you can register the method label.</div>
+          <div><Label>Provider name</Label><Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Stripe, Sberbank, Tinkoff, Square…" /></div>
+          <div><Label>Display label</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Stripe card" /></div>
+          <div className="rounded-md bg-secondary/40 hairline p-3 text-[11px] text-muted-foreground">
+            Future: OAuth flow / API keys per provider. Stored payment methods appear here automatically.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => {
+            if (!name || !brand) return;
+            addPaymentMethod({ kind: "bank", label: name, brand, enabled: true });
+            setName(""); setBrand(""); setOpen(false);
+            toast({ title: "Provider added", description: `${brand} ready as a payment method.` });
+          }}>Add</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

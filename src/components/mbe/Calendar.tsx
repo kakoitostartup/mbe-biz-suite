@@ -1,17 +1,16 @@
 import { useMemo, useState } from "react";
 import { useStore, Appointment } from "./store";
-import { Panel, SectionHeader } from "./ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Plus, Trash2, X, Clock, Users as UsersIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Clock, Users as UsersIcon, ListChecks } from "lucide-react";
 import { addDays, format, isSameDay, parseISO, startOfWeek } from "date-fns";
 
 const SLOT_MIN = 15;
-const ROW_H = 14; // px per 15-min slot
-const HOURS = Array.from({ length: 13 }, (_, i) => 8 + i); // 08:00 — 20:00
+const ROW_H = 14;
+const HOURS = Array.from({ length: 13 }, (_, i) => 8 + i);
 const DURATIONS = [15, 30, 45, 60, 75, 90, 120];
 
 type Props = {
@@ -20,21 +19,28 @@ type Props = {
   defaultClient?: string;
   defaultTitle?: string;
   dealId?: string;
+  /** when true, only show appointments linked to deals/clients */
+  clientLinkedOnly?: boolean;
 };
 
-export const CalendarDialog = ({ open, onOpenChange, defaultClient, defaultTitle, dealId }: Props) => (
+export const CalendarDialog = ({ open, onOpenChange, defaultClient, defaultTitle, dealId, clientLinkedOnly }: Props) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-w-6xl p-0 overflow-hidden">
       <DialogHeader className="p-5 border-b border-border">
-        <DialogTitle>Schedule appointment</DialogTitle>
+        <DialogTitle className="flex items-center gap-2">
+          Schedule appointment
+          {clientLinkedOnly && <span className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">client base</span>}
+        </DialogTitle>
       </DialogHeader>
-      <CalendarBoard defaultClient={defaultClient} defaultTitle={defaultTitle} dealId={dealId} />
+      <CalendarBoard defaultClient={defaultClient} defaultTitle={defaultTitle} dealId={dealId} clientLinkedOnly={clientLinkedOnly} />
     </DialogContent>
   </Dialog>
 );
 
-export const CalendarBoard = ({ defaultClient, defaultTitle, dealId }: { defaultClient?: string; defaultTitle?: string; dealId?: string }) => {
-  const { appointments, addAppointment, removeAppointment } = useStore();
+export const CalendarBoard = ({ defaultClient, defaultTitle, dealId, clientLinkedOnly }: {
+  defaultClient?: string; defaultTitle?: string; dealId?: string; clientLinkedOnly?: boolean;
+}) => {
+  const { appointments, addAppointment, removeAppointment, tasks } = useStore();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [editing, setEditing] = useState<{ day: Date; hour: number; minute: number } | null>(null);
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -42,11 +48,12 @@ export const CalendarBoard = ({ defaultClient, defaultTitle, dealId }: { default
   const slotsPerHour = 60 / SLOT_MIN;
   const totalSlots = HOURS.length * slotsPerHour;
 
-  const apptsByDay = (d: Date) => appointments.filter((a) => isSameDay(parseISO(a.start), d));
+  const visibleAppts = clientLinkedOnly
+    ? appointments.filter((a) => !!a.dealId || a.clients.length > 0)
+    : appointments;
 
-  const handleSlotClick = (d: Date, hour: number, minute: number) => {
-    setEditing({ day: d, hour, minute });
-  };
+  const apptsByDay = (d: Date) => visibleAppts.filter((a) => isSameDay(parseISO(a.start), d));
+  const tasksByDay = (d: Date) => tasks.filter((t) => !t.done && isSameDay(parseISO(t.due), d) && (clientLinkedOnly ? !!t.dealId || !!t.client : true));
 
   return (
     <div className="bg-background">
@@ -55,25 +62,30 @@ export const CalendarBoard = ({ defaultClient, defaultTitle, dealId }: { default
           <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, -7))}><ChevronLeft className="h-4 w-4" /></Button>
           <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setWeekStart(addDays(weekStart, 7))}><ChevronRight className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>Today</Button>
-          <div className="ml-3 text-sm font-medium">
-            {format(weekStart, "MMM d")} — {format(addDays(weekStart, 6), "MMM d, yyyy")}
-          </div>
+          <div className="ml-3 text-sm font-medium">{format(weekStart, "MMM d")} — {format(addDays(weekStart, 6), "MMM d, yyyy")}</div>
         </div>
-        <div className="text-[11px] text-muted-foreground">15-min slots • click any slot to book</div>
+        <div className="text-[11px] text-muted-foreground">15-min slots • tasks shown as pills</div>
       </div>
 
       <div className="grid grid-cols-[60px_repeat(7,_1fr)] border-b border-border bg-secondary/30 text-[11px]">
         <div />
-        {days.map((d) => (
-          <div key={d.toISOString()} className={`px-2 py-2 text-center ${isSameDay(d, new Date()) ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
-            <div className="uppercase tracking-widest">{format(d, "EEE")}</div>
-            <div className={`mt-0.5 inline-block h-6 w-6 leading-6 rounded-full ${isSameDay(d, new Date()) ? "bg-primary text-primary-foreground" : ""}`}>{format(d, "d")}</div>
-          </div>
-        ))}
+        {days.map((d) => {
+          const ts = tasksByDay(d);
+          return (
+            <div key={d.toISOString()} className={`px-2 py-2 text-center ${isSameDay(d, new Date()) ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+              <div className="uppercase tracking-widest">{format(d, "EEE")}</div>
+              <div className={`mt-0.5 inline-block h-6 w-6 leading-6 rounded-full ${isSameDay(d, new Date()) ? "bg-primary text-primary-foreground" : ""}`}>{format(d, "d")}</div>
+              {ts.length > 0 && (
+                <div className="mt-1 inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--stage-progress))]/20 text-foreground/80">
+                  <ListChecks className="h-2.5 w-2.5" /> {ts.length}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-[60px_repeat(7,_1fr)] max-h-[60vh] overflow-auto">
-        {/* time column */}
         <div className="border-r border-border">
           {HOURS.map((h) => (
             <div key={h} style={{ height: ROW_H * slotsPerHour }} className="text-[10px] text-muted-foreground text-right pr-2 -mt-2">{`${String(h).padStart(2, "0")}:00`}</div>
@@ -81,23 +93,18 @@ export const CalendarBoard = ({ defaultClient, defaultTitle, dealId }: { default
         </div>
         {days.map((d) => {
           const dayAppts = apptsByDay(d);
+          const dayTasks = tasksByDay(d);
           return (
             <div key={d.toISOString()} className="relative border-r border-border last:border-r-0">
-              {/* slot grid */}
               {Array.from({ length: totalSlots }).map((_, i) => {
                 const hour = HOURS[0] + Math.floor(i / slotsPerHour);
                 const minute = (i % slotsPerHour) * SLOT_MIN;
                 const isHour = minute === 0;
                 return (
-                  <button
-                    key={i}
-                    onClick={() => handleSlotClick(d, hour, minute)}
-                    style={{ height: ROW_H }}
-                    className={`block w-full hover:bg-foreground/5 transition-colors ${isHour ? "border-t border-border" : "border-t border-border/30"}`}
-                  />
+                  <button key={i} onClick={() => setEditing({ day: d, hour, minute })} style={{ height: ROW_H }}
+                    className={`block w-full hover:bg-foreground/5 transition-colors ${isHour ? "border-t border-border" : "border-t border-border/30"}`} />
                 );
               })}
-              {/* appointments overlaid */}
               {dayAppts.map((a) => {
                 const start = parseISO(a.start);
                 const minutesFromTop = (start.getHours() - HOURS[0]) * 60 + start.getMinutes();
@@ -106,11 +113,8 @@ export const CalendarBoard = ({ defaultClient, defaultTitle, dealId }: { default
                 const height = (a.duration / SLOT_MIN) * ROW_H;
                 const color = a.color || "stage-progress";
                 return (
-                  <div
-                    key={a.id}
-                    style={{ top, height, background: `hsl(var(--${color}) / 0.18)`, borderLeft: `3px solid hsl(var(--${color}))` }}
-                    className="absolute left-0.5 right-0.5 rounded-md p-1.5 text-[10px] overflow-hidden group hover:shadow-elegant transition-all"
-                  >
+                  <div key={a.id} style={{ top, height, background: `hsl(var(--${color}) / 0.18)`, borderLeft: `3px solid hsl(var(--${color}))` }}
+                    className="absolute left-0.5 right-0.5 rounded-md p-1.5 text-[10px] overflow-hidden group hover:shadow-elegant transition-all">
                     <div className="flex items-center gap-1 font-semibold truncate">
                       <Clock className="h-2.5 w-2.5 shrink-0" />{format(start, "HH:mm")} • {a.duration}m
                     </div>
@@ -118,12 +122,22 @@ export const CalendarBoard = ({ defaultClient, defaultTitle, dealId }: { default
                     <div className="flex items-center gap-1 text-muted-foreground truncate">
                       <UsersIcon className="h-2.5 w-2.5 shrink-0" />{a.clients.join(", ")}
                     </div>
-                    <button
-                      onClick={() => removeAppointment(a.id)}
-                      className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 h-4 w-4 grid place-items-center rounded bg-background/70 hover:bg-destructive hover:text-destructive-foreground transition-all"
-                    >
+                    <button onClick={() => removeAppointment(a.id)}
+                      className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 h-4 w-4 grid place-items-center rounded bg-background/70 hover:bg-destructive hover:text-destructive-foreground transition-all">
                       <X className="h-2.5 w-2.5" />
                     </button>
+                  </div>
+                );
+              })}
+              {dayTasks.map((t) => {
+                const start = parseISO(t.due);
+                const minutesFromTop = (start.getHours() - HOURS[0]) * 60 + start.getMinutes();
+                if (minutesFromTop < 0) return null;
+                const top = (minutesFromTop / SLOT_MIN) * ROW_H;
+                return (
+                  <div key={t.id} style={{ top }} className="absolute left-0.5 right-0.5 h-3.5 flex items-center gap-1 px-1.5 rounded bg-[hsl(var(--stage-progress))]/25 text-[9px] font-medium overflow-hidden border-l-2 border-[hsl(var(--stage-progress))]">
+                    <ListChecks className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate">{t.title}{t.client ? ` · ${t.client}` : ""}</span>
                   </div>
                 );
               })}
@@ -169,9 +183,7 @@ const NewApptDialog = ({ open, onOpenChange, slot, defaultClient, defaultTitle, 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New booking · {format(start, "EEE d MMM, HH:mm")}</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>New booking · {format(start, "EEE d MMM, HH:mm")}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Meeting / Service" /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -187,8 +199,8 @@ const NewApptDialog = ({ open, onOpenChange, slot, defaultClient, defaultTitle, 
               <Select value={color} onValueChange={setColor}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["stage-new", "stage-progress", "stage-noresponse", "stage-completed", "stage-lost"].map((c) =>
-                    <SelectItem key={c} value={c}><span className="inline-block h-2.5 w-2.5 rounded-full mr-2" style={{ background: `hsl(var(--${c}))` }} />{c.replace("stage-", "")}</SelectItem>
+                  {["stage-new","stage-progress","stage-noresponse","stage-completed","stage-lost"].map((c) =>
+                    <SelectItem key={c} value={c}><span className="inline-block h-2.5 w-2.5 rounded-full mr-2" style={{ background: `hsl(var(--${c}))` }} />{c.replace("stage-","")}</SelectItem>
                   )}
                 </SelectContent>
               </Select>
