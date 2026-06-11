@@ -35,9 +35,9 @@ export type InventoryItem = {
   stock: number;
   threshold: number;
   price: number;
-  unit?: string; // ml, g, pcs
-  isProduct?: boolean; // sellable in POS
-  recipe?: RecipeItem[]; // ingredients consumed on sale
+  unit?: string;
+  isProduct?: boolean;
+  recipe?: RecipeItem[];
 };
 
 export type Task = {
@@ -45,6 +45,8 @@ export type Task = {
   title: string;
   due: string;
   done: boolean;
+  dealId?: string; // CRM-linked task
+  client?: string; // CRM-linked
 };
 
 export type Customer = {
@@ -63,6 +65,17 @@ export type HeldOrder = {
   lines: CartLine[];
   customerId?: string;
   createdAt: string;
+  comment?: string;
+};
+
+export type PaymentKind = "cash" | "card" | "bank";
+
+export type PaymentMethod = {
+  id: string;
+  kind: PaymentKind;
+  label: string;
+  brand?: string; // e.g. "Stripe", "Sberbank", "Visa"
+  enabled: boolean;
 };
 
 export type Receipt = {
@@ -74,6 +87,7 @@ export type Receipt = {
   cashierId: string;
   createdAt: string;
   voided?: boolean;
+  paymentMethodId?: string;
 };
 
 export type AuditEvent = {
@@ -89,10 +103,10 @@ export type Appointment = {
   id: string;
   dealId?: string;
   title: string;
-  clients: string[]; // client names; multiple allowed at same slot
-  start: string; // ISO
-  duration: number; // minutes (multiples of 15)
-  color?: string; // stage color id
+  clients: string[];
+  start: string;
+  duration: number;
+  color?: string;
   note?: string;
 };
 
@@ -104,9 +118,9 @@ export type Staff = {
   role: StaffRole;
   phone?: string;
   email?: string;
-  pin: string; // 8-digit
+  pin: string;
   hiredAt: string;
-  kpiTarget?: number; // monthly deals
+  kpiTarget?: number;
 };
 
 export type Shift = {
@@ -123,11 +137,15 @@ export type Subscription = {
   priceMonthly: number;
   status: "active" | "trial" | "past_due" | "canceled";
   startedAt: string;
-  renewsAt: string; // next charge
+  renewsAt: string;
   cardBrand: string;
   cardLast4: string;
-  cardExpiry: string; // MM/YY
+  cardExpiry: string;
   autoRenew: boolean;
+};
+
+export type AppSettings = {
+  liveOrdersEnabled: boolean; // online kitchen/bar dashboard
 };
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -147,46 +165,42 @@ type State = {
   staff: Staff[];
   shifts: Shift[];
   subscription: Subscription;
-  prepInstructions: Record<string, string>; // itemId -> markdown
-  recipeNotes?: string;
+  paymentMethods: PaymentMethod[];
+  settings: AppSettings;
+  prepInstructions: Record<string, string>;
 
-  // crm
   addStage: () => void;
   updateStage: (id: string, patch: Partial<Stage>) => void;
   removeStage: (id: string) => void;
   addDeal: (d: Omit<Deal, "id" | "createdAt">) => void;
   moveDeal: (id: string, stageId: string) => void;
 
-  // appointments
   addAppointment: (a: Omit<Appointment, "id">) => void;
   updateAppointment: (id: string, patch: Partial<Appointment>) => void;
   removeAppointment: (id: string) => void;
 
-  // finance
   addTransaction: (t: Omit<Transaction, "id">) => void;
 
-  // inventory
   addInventory: (i: Omit<InventoryItem, "id">) => void;
   updateStock: (id: string, delta: number) => void;
   updateInventory: (id: string, patch: Partial<InventoryItem>) => void;
+  removeInventory: (id: string) => void;
+  setPrepInstructions: (id: string, text: string) => void;
 
-  // tasks
   addTask: (t: Omit<Task, "id" | "done">) => void;
   toggleTask: (id: string) => void;
   removeTask: (id: string) => void;
 
-  // customers (kept in store, UI tab removed)
   addCustomer: (c: Omit<Customer, "id" | "createdAt">) => Customer;
   updateCustomer: (id: string, patch: Partial<Customer>) => void;
 
-  // POS
-  holdOrder: (label: string, lines: CartLine[], customerId?: string) => void;
+  holdOrder: (label: string, lines: CartLine[], customerId?: string, comment?: string) => void;
   resumeOrder: (id: string) => HeldOrder | undefined;
   removeHeldOrder: (id: string) => void;
-  checkoutOrder: (lines: CartLine[], customerId?: string) => Receipt;
+  updateHeldOrder: (id: string, patch: Partial<HeldOrder>) => void;
+  checkoutOrder: (lines: CartLine[], customerId?: string, paymentMethodId?: string) => Receipt;
   voidReceipt: (id: string, reason: string) => void;
 
-  // staff
   addStaff: (s: Omit<Staff, "id" | "hiredAt" | "pin"> & { pin?: string }) => Staff;
   updateStaff: (id: string, patch: Partial<Staff>) => void;
   removeStaff: (id: string) => void;
@@ -194,10 +208,14 @@ type State = {
   clockIn: (staffId: string) => void;
   clockOut: (staffId: string) => void;
 
-  // subscription
   updateSubscription: (patch: Partial<Subscription>) => void;
 
-  // audit
+  addPaymentMethod: (m: Omit<PaymentMethod, "id">) => void;
+  updatePaymentMethod: (id: string, patch: Partial<PaymentMethod>) => void;
+  removePaymentMethod: (id: string) => void;
+
+  updateSettings: (patch: Partial<AppSettings>) => void;
+
   log: (e: Omit<AuditEvent, "id" | "at">) => void;
 };
 
@@ -205,7 +223,6 @@ const today = new Date();
 const daysAgo = (n: number) => new Date(today.getTime() - n * 86400000).toISOString();
 const minsAgo = (n: number) => new Date(today.getTime() - n * 60000).toISOString();
 
-// Pre-seeded inventory: ingredients + products with recipes
 const milkId = uid();
 const beanId = uid();
 const cupId = uid();
@@ -214,6 +231,9 @@ const cappId = uid();
 const espId = uid();
 const latteId = uid();
 const croissantId = uid();
+
+const dealAcme = uid();
+const dealNova = uid();
 
 export const useStore = create<State>((set, get) => ({
   stages: [
@@ -224,8 +244,8 @@ export const useStore = create<State>((set, get) => ({
     { id: "lost", label: "Deal Lost", color: "stage-lost" },
   ],
   deals: [
-    { id: uid(), client: "Acme Corp", title: "Annual retainer", amount: 12500, stageId: "progress", createdAt: daysAgo(3) },
-    { id: uid(), client: "Nova Studio", title: "Brand identity", amount: 4800, stageId: "new", createdAt: daysAgo(1) },
+    { id: dealAcme, client: "Acme Corp", title: "Annual retainer", amount: 12500, stageId: "progress", createdAt: daysAgo(3) },
+    { id: dealNova, client: "Nova Studio", title: "Brand identity", amount: 4800, stageId: "new", createdAt: daysAgo(1) },
     { id: uid(), client: "Helix Labs", title: "Platform license", amount: 22000, stageId: "completed", createdAt: daysAgo(8) },
   ],
   transactions: [
@@ -248,7 +268,8 @@ export const useStore = create<State>((set, get) => ({
   ],
   tasks: [
     { id: uid(), title: "Order milk delivery", due: new Date(today.getTime() + 3600_000 * 5).toISOString(), done: false },
-    { id: uid(), title: "Review yesterday's Z-report", due: new Date(today.getTime() + 86400000).toISOString(), done: false },
+    { id: uid(), title: "Send proposal to Acme Corp", due: new Date(today.getTime() + 86400000).toISOString(), done: false, dealId: dealAcme, client: "Acme Corp" },
+    { id: uid(), title: "Follow up with Nova Studio", due: new Date(today.getTime() + 86400000 * 2).toISOString(), done: false, dealId: dealNova, client: "Nova Studio" },
   ],
   customers: [
     { id: uid(), phone: "+1 555 0142", name: "Anna", note: "Allergic to peanuts • likes window seat", createdAt: daysAgo(6) },
@@ -258,7 +279,10 @@ export const useStore = create<State>((set, get) => ({
     { id: uid(), label: "Table 4", lines: [
       { itemId: cappId, name: "Cappuccino", price: 4.5, qty: 2 },
       { itemId: croissantId, name: "Croissant", price: 3.8, qty: 1 },
-    ], createdAt: minsAgo(4) },
+    ], createdAt: minsAgo(4), comment: "Oat milk on the cappuccino" },
+    { id: uid(), label: "Table 7", lines: [
+      { itemId: latteId, name: "Vanilla Latte", price: 5.2, qty: 1 },
+    ], createdAt: minsAgo(1), comment: "Extra hot" },
   ],
   receipts: [
     { id: uid(), number: "Z-1001", lines: [{ itemId: espId, name: "Espresso", price: 3, qty: 1 }], total: 3, cashierId: "cashier-1", createdAt: minsAgo(35) },
@@ -272,8 +296,8 @@ export const useStore = create<State>((set, get) => ({
     const base = new Date(); base.setHours(10, 0, 0, 0);
     const t = (h: number, m: number) => { const d = new Date(base); d.setHours(h, m, 0, 0); return d.toISOString(); };
     return [
-      { id: uid(), title: "Brand kickoff", clients: ["Nova Studio"], start: t(10, 0), duration: 45, color: "stage-progress" },
-      { id: uid(), title: "Discovery call", clients: ["Acme Corp", "Helix Labs"], start: t(11, 30), duration: 30, color: "stage-new" },
+      { id: uid(), title: "Brand kickoff", clients: ["Nova Studio"], start: t(10, 0), duration: 45, color: "stage-progress", dealId: dealNova },
+      { id: uid(), title: "Discovery call", clients: ["Acme Corp", "Helix Labs"], start: t(11, 30), duration: 30, color: "stage-new", dealId: dealAcme },
       { id: uid(), title: "Contract review", clients: ["Helix Labs"], start: t(14, 15), duration: 60, color: "stage-completed" },
     ];
   })(),
@@ -288,16 +312,16 @@ export const useStore = create<State>((set, get) => ({
     { id: uid(), staffId: "barista-1", start: new Date(today.getTime() - 3600_000 * 2.5).toISOString() },
   ],
   subscription: {
-    plan: "Pro",
-    priceMonthly: 49,
-    status: "active",
+    plan: "Pro", priceMonthly: 49, status: "active",
     startedAt: daysAgo(120),
     renewsAt: new Date(today.getTime() + 86400000 * 14).toISOString(),
-    cardBrand: "Visa",
-    cardLast4: "4242",
-    cardExpiry: "08/28",
-    autoRenew: true,
+    cardBrand: "Visa", cardLast4: "4242", cardExpiry: "08/28", autoRenew: true,
   },
+  paymentMethods: [
+    { id: uid(), kind: "cash", label: "Cash", enabled: true },
+    { id: uid(), kind: "card", label: "Card terminal", brand: "Generic POS", enabled: true },
+  ],
+  settings: { liveOrdersEnabled: true },
   prepInstructions: {
     [cappId]: "1. Grind 18g of beans (medium-fine)\n2. Pull a double espresso (~25s, 36g out)\n3. Steam 200ml milk to 65°C, microfoam\n4. Pour into 12oz cup — heart latte art\n5. Serve immediately",
     [espId]: "1. Grind 9g of beans (fine)\n2. Tamp evenly, 30lb pressure\n3. Pull single shot, 22–28s\n4. Serve in warm demitasse cup",
@@ -332,6 +356,8 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ inventory: s.inventory.map((x) => (x.id === id ? { ...x, stock: Math.max(0, x.stock + delta) } : x)) })),
   updateInventory: (id, patch) =>
     set((s) => ({ inventory: s.inventory.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
+  removeInventory: (id) => set((s) => ({ inventory: s.inventory.filter((x) => x.id !== id) })),
+  setPrepInstructions: (id, text) => set((s) => ({ prepInstructions: { ...s.prepInstructions, [id]: text } })),
 
   addTask: (t) => set((s) => ({ tasks: [...s.tasks, { ...t, id: uid(), done: false }] })),
   toggleTask: (id) => set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)) })),
@@ -346,8 +372,8 @@ export const useStore = create<State>((set, get) => ({
   updateCustomer: (id, patch) =>
     set((s) => ({ customers: s.customers.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
 
-  holdOrder: (label, lines, customerId) => {
-    set((s) => ({ heldOrders: [{ id: uid(), label, lines, customerId, createdAt: new Date().toISOString() }, ...s.heldOrders] }));
+  holdOrder: (label, lines, customerId, comment) => {
+    set((s) => ({ heldOrders: [{ id: uid(), label, lines, customerId, comment, createdAt: new Date().toISOString() }, ...s.heldOrders] }));
     get().log({ actor: "cashier-1", action: "Order held", detail: `${label} • ${lines.length} items`, severity: "info" });
   },
   resumeOrder: (id) => {
@@ -356,13 +382,13 @@ export const useStore = create<State>((set, get) => ({
     return order;
   },
   removeHeldOrder: (id) => set((s) => ({ heldOrders: s.heldOrders.filter((o) => o.id !== id) })),
+  updateHeldOrder: (id, patch) => set((s) => ({ heldOrders: s.heldOrders.map((o) => o.id === id ? { ...o, ...patch } : o) })),
 
-  checkoutOrder: (lines, customerId) => {
+  checkoutOrder: (lines, customerId, paymentMethodId) => {
     const total = lines.reduce((s, l) => s + l.price * l.qty, 0);
     const number = `Z-${1000 + get().receipts.length + 1}`;
-    const receipt: Receipt = { id: uid(), number, lines, total, customerId, cashierId: "cashier-1", createdAt: new Date().toISOString() };
+    const receipt: Receipt = { id: uid(), number, lines, total, customerId, paymentMethodId, cashierId: "cashier-1", createdAt: new Date().toISOString() };
     set((s) => ({ receipts: [receipt, ...s.receipts] }));
-    // Consume inventory via recipes
     const inv = get().inventory;
     const updates: Record<string, number> = {};
     lines.forEach((l) => {
@@ -387,7 +413,6 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ receipts: s.receipts.map((x) => (x.id === id ? { ...x, voided: true } : x)) }));
     if (r) get().log({ actor: "cashier-1", action: "Receipt voided", detail: `${r.number} • ${reason}`, severity: "alert" });
   },
-
 
   addAppointment: (a) => set((s) => ({ appointments: [...s.appointments, { ...a, id: uid() }] })),
   updateAppointment: (id, patch) => set((s) => ({ appointments: s.appointments.map((x) => x.id === id ? { ...x, ...patch } : x) })),
@@ -417,6 +442,12 @@ export const useStore = create<State>((set, get) => ({
   })),
 
   updateSubscription: (patch) => set((s) => ({ subscription: { ...s.subscription, ...patch } })),
+
+  addPaymentMethod: (m) => set((s) => ({ paymentMethods: [...s.paymentMethods, { ...m, id: uid() }] })),
+  updatePaymentMethod: (id, patch) => set((s) => ({ paymentMethods: s.paymentMethods.map((x) => x.id === id ? { ...x, ...patch } : x) })),
+  removePaymentMethod: (id) => set((s) => ({ paymentMethods: s.paymentMethods.filter((x) => x.id !== id) })),
+
+  updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
   log: (e) => set((s) => ({ audit: [{ ...e, id: uid(), at: new Date().toISOString() }, ...s.audit].slice(0, 100) })),
 }));

@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { useStore } from "./store";
 import { Panel, SectionHeader, Stat } from "./ui";
 import { Button } from "@/components/ui/button";
-import { Download, FileBarChart2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, FileBarChart2, ClipboardCheck, AlertTriangle, Package } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { parseISO, isToday, isThisWeek, isThisMonth, isThisYear, subDays, isAfter, format, startOfDay } from "date-fns";
 
@@ -13,6 +14,7 @@ const LABELS: Record<Period, string> = { day: "Today", week: "This week", month:
 export const Reports = () => {
   const { receipts, transactions, deals } = useStore();
   const [period, setPeriod] = useState<Period>("week");
+  const [auditOpen, setAuditOpen] = useState(false);
 
   const inPeriod = (iso: string) => {
     const d = parseISO(iso);
@@ -71,7 +73,14 @@ export const Reports = () => {
       <SectionHeader
         title="Reports"
         subtitle="Performance breakdowns by day, week, month, half-year and year."
-        action={<Button variant="secondary" className="h-9" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>}
+        action={
+          <div className="flex gap-2">
+            <Button variant="secondary" className="h-9" onClick={() => setAuditOpen(true)}>
+              <ClipboardCheck className="h-4 w-4 mr-1" /> Ревизия
+            </Button>
+            <Button variant="secondary" className="h-9" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
+          </div>
+        }
       />
 
       <div className="flex flex-wrap gap-1 mb-5 p-1 rounded-lg bg-secondary/50 w-fit hairline">
@@ -108,6 +117,76 @@ export const Reports = () => {
           </ResponsiveContainer>
         </div>
       </Panel>
+
+      <AuditDialog open={auditOpen} onOpenChange={setAuditOpen} />
     </div>
+  );
+};
+
+const AuditDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => {
+  const { inventory, receipts } = useStore();
+
+  // Compute consumed quantities from POS receipts (via recipes when present)
+  const consumed = useMemo(() => {
+    const map = new Map<string, number>();
+    receipts.filter((r) => !r.voided).forEach((r) => {
+      r.lines.forEach((l) => {
+        const item = inventory.find((i) => i.id === l.itemId);
+        if (!item) return;
+        if (item.recipe?.length) {
+          item.recipe.forEach((ri) => map.set(ri.itemId, (map.get(ri.itemId) || 0) + ri.qty * l.qty));
+        } else {
+          map.set(l.itemId, (map.get(l.itemId) || 0) + l.qty);
+        }
+      });
+    });
+    return map;
+  }, [inventory, receipts]);
+
+  const rows = inventory.filter((i) => !i.isProduct).map((i) => {
+    const used = consumed.get(i.id) || 0;
+    const expected = Math.max(0, i.stock); // theoretical remaining
+    const startOfPeriod = i.stock + used; // back-compute starting stock
+    const isLow = i.stock <= i.threshold;
+    return { i, used, startOfPeriod, expected, isLow };
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Ревизия / Stocktake</DialogTitle>
+        </DialogHeader>
+        <div className="text-xs text-muted-foreground mb-3">
+          Calculated from POS sales × tech cards. Compare the “Expected” column with a physical count to spot shrinkage.
+        </div>
+        <div className="rounded-lg hairline divide-y divide-border">
+          <div className="grid grid-cols-[1fr_70px_70px_70px_80px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/40">
+            <div>Item</div><div className="text-right">Start</div><div className="text-right">Used</div><div className="text-right">Expected</div><div className="text-right">Status</div>
+          </div>
+          {rows.map(({ i, used, startOfPeriod, expected, isLow }) => (
+            <div key={i.id} className="grid grid-cols-[1fr_70px_70px_70px_80px] gap-2 px-3 py-2 items-center text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="truncate">{i.name} <span className="text-muted-foreground text-[10px]">{i.unit}</span></div>
+              </div>
+              <div className="text-right tabular-nums text-muted-foreground">{startOfPeriod}</div>
+              <div className="text-right tabular-nums">−{used}</div>
+              <div className="text-right tabular-nums font-semibold">{expected}</div>
+              <div className="text-right">
+                {isLow ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">
+                    <AlertTriangle className="h-2.5 w-2.5" /> low
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">ok</span>
+                )}
+              </div>
+            </div>
+          ))}
+          {rows.length === 0 && <div className="text-xs text-muted-foreground py-8 text-center">No stock items.</div>}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
