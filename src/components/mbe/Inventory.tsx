@@ -193,17 +193,11 @@ const ProductCard = ({ item, onEditRecipe }: { item: InventoryItem; onEditRecipe
 const RecipeDialog = ({ itemId, onClose }: { itemId: string | null; onClose: () => void }) => {
   const { inventory, updateInventory } = useStore();
   const item = inventory.find((i) => i.id === itemId);
-  const [draft, setDraft] = useState<RecipeItem[]>([]);
   const stockChoices = inventory.filter((i) => !i.isProduct);
-
-  // sync on open
   const open = !!item;
-  if (open && draft.length === 0 && (item?.recipe?.length || 0) > 0 && draft !== item?.recipe) {
-    // initialize once per open
-  }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { setDraft([]); onClose(); } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><ChefHat className="h-4 w-4" /> Tech card · {item?.name}</DialogTitle>
