@@ -149,7 +149,7 @@ const CustomizeStages = () => {
             </div>
           ))}
         </div>
-        <Button variant="secondary" className="w-full mt-3 h-8" onClick={addStage}><Plus className="h-3 w-3 mr-1" /> Add stage</Button>
+        <Button variant="secondary" className="w-full mt-3 h-8" onClick={addStage}><Plus className="h-3 w-3 mr-1" /> Добавить этап</Button>
       </PopoverContent>
     </Popover>
   );
