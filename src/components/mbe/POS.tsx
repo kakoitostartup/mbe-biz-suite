@@ -102,16 +102,17 @@ export const POS = () => {
   return (
     <div className="fade-in">
       <SectionHeader
-        title="POS Terminal"
-        subtitle="Tap to sell. Quantity in one tap, tech cards on call, ingredients auto-deducted."
+        title="Касса (POS)"
+        subtitle="Касание — продажа. Количество вводится в один тап, техкарта по запросу, ингредиенты списываются автоматически."
       />
+
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Product grid */}
         <Panel className="lg:col-span-3">
           <div className="relative mb-3">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" className="pl-9 h-9 bg-secondary border-transparent" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск товаров…" className="pl-9 h-9 bg-secondary border-transparent" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filtered.map((p) => (
@@ -123,19 +124,19 @@ export const POS = () => {
                 onHelp={() => setHelpItem(p.id)}
               />
             ))}
-            {filtered.length === 0 && <div className="col-span-full text-xs text-muted-foreground py-8 text-center">No products match.</div>}
+            {filtered.length === 0 && <div className="col-span-full text-xs text-muted-foreground py-8 text-center">Нет товаров по запросу.</div>}
           </div>
 
           {heldOrders.length > 0 && (
             <div className="mt-6">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Held orders</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Отложенные заказы</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {heldOrders.map((o) => (
                   <div key={o.id} className="rounded-lg bg-secondary/40 hairline p-3 flex items-center gap-2">
                     <PauseCircle className="h-4 w-4 text-muted-foreground" />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{o.label}</div>
-                      <div className="text-[10px] text-muted-foreground">{o.lines.length} items • {format(parseISO(o.createdAt), "HH:mm")}</div>
+                      <div className="text-[10px] text-muted-foreground">{o.lines.length} позиций • {format(parseISO(o.createdAt), "HH:mm")}</div>
                       {o.comment && <div className="text-[10px] text-foreground/70 truncate italic">“{o.comment}”</div>}
                     </div>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => resume(o.id)}><PlayCircle className="h-4 w-4" /></Button>
@@ -150,10 +151,11 @@ export const POS = () => {
         {/* Cart + checkout flow */}
         <Panel className="lg:col-span-2 flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-medium flex items-center gap-2"><ReceiptText className="h-4 w-4" /> Current order</div>
+            <div className="text-sm font-medium flex items-center gap-2"><ReceiptText className="h-4 w-4" /> Текущий заказ</div>
           </div>
           <div className="flex-1 space-y-2 max-h-[360px] overflow-auto pr-1">
-            {cart.length === 0 && <div className="text-xs text-muted-foreground py-10 text-center">Tap a product to start.</div>}
+            {cart.length === 0 && <div className="text-xs text-muted-foreground py-10 text-center">Нажмите на товар, чтобы начать.</div>}
+
             {cart.map((l) => (
               <div key={l.itemId} className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/50 hairline">
                 <div className="flex-1 min-w-0">
@@ -170,7 +172,7 @@ export const POS = () => {
 
           <div className="mt-4 pt-4 border-t border-border space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-muted-foreground">Total</div>
+              <div className="text-xs text-muted-foreground">Итого</div>
               <div className="text-2xl font-semibold">${total.toFixed(2)}</div>
             </div>
 
@@ -179,20 +181,21 @@ export const POS = () => {
               <Dialog open={holdOpen} onOpenChange={setHoldOpen}>
                 <DialogTrigger asChild>
                   <Button variant="secondary" className="h-11" disabled={cart.length === 0}>
-                    <PauseCircle className="h-4 w-4 mr-1" /> Hold
+                    <PauseCircle className="h-4 w-4 mr-1" /> Отложить
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader><DialogTitle>Hold order</DialogTitle></DialogHeader>
+                  <DialogHeader><DialogTitle>Отложить заказ</DialogTitle></DialogHeader>
                   <div className="space-y-3">
-                    <div><Label>Label (e.g. "Table 4")</Label><Input value={holdLabel} onChange={(e) => setHoldLabel(e.target.value)} /></div>
-                    <div><Label>Comment (shown on live dashboard)</Label><Textarea value={holdComment} onChange={(e) => setHoldComment(e.target.value)} placeholder="Oat milk, extra hot…" /></div>
+                    <div><Label>Метка (например «Стол 4»)</Label><Input value={holdLabel} onChange={(e) => setHoldLabel(e.target.value)} /></div>
+                    <div><Label>Комментарий (виден на live-дашборде)</Label><Textarea value={holdComment} onChange={(e) => setHoldComment(e.target.value)} placeholder="Овсяное молоко, погорячее…" /></div>
                   </div>
-                  <DialogFooter><Button onClick={onHold}>Hold</Button></DialogFooter>
+                  <DialogFooter><Button onClick={onHold}>Отложить</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
               <Button className="h-11" onClick={checkout} disabled={cart.length === 0 || !paymentId}>
-                Charge ${total.toFixed(2)}
+                Оплатить ${total.toFixed(2)}
+
               </Button>
             </div>
 
@@ -204,26 +207,27 @@ export const POS = () => {
                     <User className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium">{customer ? (customer.name || customer.phone) : "Attach bonus card"}</div>
-                    <div className="text-[10px] text-muted-foreground">{customer ? customer.note || "loyalty customer" : "Phone-based loyalty • optional"}</div>
+                    <div className="text-xs font-medium">{customer ? (customer.name || customer.phone) : "Привязать бонусную карту"}</div>
+                    <div className="text-[10px] text-muted-foreground">{customer ? customer.note || "постоянный клиент" : "По номеру телефона • опционально"}</div>
                   </div>
                   {customer && <Check className="h-4 w-4 text-[hsl(var(--stage-completed))]" />}
                 </button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Bonus card / customer</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Бонусная карта / клиент</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 …" /></div>
-                  <div><Label>Name (optional)</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-                  <div><Label>Note (allergies, preferences…)</Label><Input value={note} onChange={(e) => setNote(e.target.value)} /></div>
+                  <div><Label>Телефон</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7 …" /></div>
+                  <div><Label>Имя (опционально)</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                  <div><Label>Заметка (аллергии, предпочтения…)</Label><Input value={note} onChange={(e) => setNote(e.target.value)} /></div>
                 </div>
-                <DialogFooter><Button onClick={findOrCreateCustomer} disabled={!phone}>Find / Create</Button></DialogFooter>
+                <DialogFooter><Button onClick={findOrCreateCustomer} disabled={!phone}>Найти / создать</Button></DialogFooter>
+
               </DialogContent>
             </Dialog>
 
             {/* 3. Payment method selector */}
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Payment method</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Способ оплаты</div>
               <div className="grid grid-cols-2 gap-1.5">
                 {enabledMethods.map((m) => {
                   const Icon = m.kind === "cash" ? Banknote : m.kind === "card" ? CreditCard : Building2;
@@ -250,13 +254,14 @@ export const POS = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ChefHat className="h-4 w-4" />
-              Tech card · {inventory.find((i) => i.id === helpItem)?.name}
+              Техкарта · {inventory.find((i) => i.id === helpItem)?.name}
+
             </DialogTitle>
           </DialogHeader>
           <RecipeView itemId={helpItem} />
           {prepInstructions[helpItem || ""] && (
             <>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-4 mb-2">Preparation</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-4 mb-2">Приготовление</div>
               <ol className="space-y-2 text-sm">
                 {(prepInstructions[helpItem || ""] || "").split("\n").filter(Boolean).map((line, i) => (
                   <li key={i} className="flex gap-3 p-3 rounded-lg bg-secondary/40 hairline">
@@ -332,7 +337,7 @@ const RecipeView = ({ itemId }: { itemId: string | null }) => {
   }
   return (
     <div className="rounded-lg bg-secondary/40 hairline p-3 space-y-1.5">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ingredients per serving</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ингредиенты на 1 порцию</div>
       {item.recipe.map((r, i) => {
         const inv = inventory.find((x) => x.id === r.itemId);
         return (
@@ -354,26 +359,28 @@ const BankConnectButton = ({ open, setOpen }: { open: boolean; setOpen: (v: bool
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex items-center gap-2 px-3 py-2 rounded-md text-xs bg-secondary/40 hairline border-dashed hover:bg-secondary text-muted-foreground border border-dashed">
-          <Plus className="h-3.5 w-3.5" /> Connect bank
+          <Plus className="h-3.5 w-3.5" /> Подключить банк
         </button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Connect bank / acquirer</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Подключение банка / эквайринга</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="text-xs text-muted-foreground">Hook up a bank or acquiring provider. Integration credentials can be wired up later — for now you can register the method label.</div>
-          <div><Label>Provider name</Label><Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Stripe, Sberbank, Tinkoff, Square…" /></div>
-          <div><Label>Display label</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Stripe card" /></div>
+          <div className="text-xs text-muted-foreground">Подключите банк или эквайринг. Ключи API можно ввести позже — пока зарегистрируем способ оплаты в кассе.</div>
+          <div><Label>Провайдер</Label><Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Stripe, Сбербанк, Тинькофф, Альфа…" /></div>
+          <div><Label>Название способа</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="например, «Карта Stripe»" /></div>
           <div className="rounded-md bg-secondary/40 hairline p-3 text-[11px] text-muted-foreground">
-            Future: OAuth flow / API keys per provider. Stored payment methods appear here automatically.
+            В будущем: OAuth / API-ключи на каждый банк. Привязанные способы появятся здесь автоматически.
           </div>
+
         </div>
         <DialogFooter>
           <Button onClick={() => {
             if (!name || !brand) return;
             addPaymentMethod({ kind: "bank", label: name, brand, enabled: true });
             setName(""); setBrand(""); setOpen(false);
-            toast({ title: "Provider added", description: `${brand} ready as a payment method.` });
-          }}>Add</Button>
+            toast({ title: "Провайдер добавлен", description: `${brand} доступен как способ оплаты.` });
+          }}>Добавить</Button>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>

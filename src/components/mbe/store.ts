@@ -148,6 +148,9 @@ export type AppSettings = {
   liveOrdersEnabled: boolean; // online kitchen/bar dashboard
 };
 
+export type WidgetState = Record<string, boolean>; // id → collapsed?
+
+
 const uid = () => Math.random().toString(36).slice(2, 9);
 const pin = () => Math.floor(10_000_000 + Math.random() * 89_999_999).toString();
 
@@ -168,6 +171,9 @@ type State = {
   paymentMethods: PaymentMethod[];
   settings: AppSettings;
   prepInstructions: Record<string, string>;
+  widgets: WidgetState;
+  toggleWidget: (id: string) => void;
+
 
   addStage: () => void;
   updateStage: (id: string, patch: Partial<Stage>) => void;
@@ -328,6 +334,10 @@ export const useStore = create<State>((set, get) => ({
     [latteId]: "1. Pull double espresso (18g in / 36g out)\n2. Add 15ml vanilla syrup to cup\n3. Steam 220ml milk silky\n4. Pour latte art on top\n5. Sleeve cup, serve",
     [croissantId]: "Reheat 90s at 160°C in convection oven. Serve on small plate with butter knife.",
   },
+  widgets: {},
+  toggleWidget: (id) => set((s) => ({ widgets: { ...s.widgets, [id]: !s.widgets[id] } })),
+
+
 
   addStage: () => set((s) => ({ stages: [...s.stages, { id: uid(), label: "New Stage", color: "stage-progress" }] })),
   updateStage: (id, patch) => set((s) => ({ stages: s.stages.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),

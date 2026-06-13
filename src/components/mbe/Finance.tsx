@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore } from "./store";
-import { Panel, SectionHeader, Stat } from "./ui";
+import { Panel, SectionHeader, Stat, Widget } from "./ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Plus, Receipt, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO } from "date-fns";
+
 
 const ranges = { "7d": 7, "30d": 30, "90d": 90 } as const;
 type RangeKey = keyof typeof ranges;
@@ -66,17 +67,17 @@ export const Finance = () => {
   const completedDeals = deals.filter((d) => d.stageId === "completed");
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-4">
       <SectionHeader
-        title="Finance"
-        subtitle="Income overview, comparisons, and synced deal payments."
+        title="Финансы"
+        subtitle="Сводка доходов, сравнения и синхронизация со сделками."
         action={
           <div className="flex items-center gap-2">
             <Tabs value={range} onValueChange={(v) => setRange(v as RangeKey)}>
               <TabsList className="bg-secondary">
-                <TabsTrigger value="7d">7D</TabsTrigger>
-                <TabsTrigger value="30d">30D</TabsTrigger>
-                <TabsTrigger value="90d">90D</TabsTrigger>
+                <TabsTrigger value="7d">7д</TabsTrigger>
+                <TabsTrigger value="30d">30д</TabsTrigger>
+                <TabsTrigger value="90d">90д</TabsTrigger>
               </TabsList>
             </Tabs>
             <AddSaleDialog open={open} setOpen={setOpen} onAdd={addTransaction} />
@@ -84,25 +85,25 @@ export const Finance = () => {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Stat label={`Total income (${range})`} value={`$${totalIncome.toLocaleString()}`} delta={`${diffPct >= 0 ? "+" : ""}${diffPct}% vs ${compareMode === "prev" ? "last month" : "custom"}`} />
-        <Stat label="Expenses" value={`$${totalExpense.toLocaleString()}`} delta={`${transactions.filter((t) => t.type === "expense").length} entries`} />
-        <Stat label="Completed deals" value={`${completedDeals.length}`} delta={`Synced from CRM`} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Stat label={`Доход (${range})`} value={`$${totalIncome.toLocaleString()}`} delta={`${diffPct >= 0 ? "+" : ""}${diffPct}% vs ${compareMode === "prev" ? "прошлый месяц" : "период"}`} />
+        <Stat label="Расходы" value={`$${totalExpense.toLocaleString()}`} delta={`${transactions.filter((t) => t.type === "expense").length} записей`} />
+        <Stat label="Закрытые сделки" value={`${completedDeals.length}`} delta="Синхрон с CRM" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Panel className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="text-sm font-medium">Income trend</div>
-              <div className="text-xs text-muted-foreground">{format(start, "MMM d")} — {format(now, "MMM d, yyyy")}</div>
-            </div>
+        <Widget
+          id="finance.trend"
+          className="lg:col-span-2"
+          title="Динамика дохода"
+          subtitle={`${format(start, "MMM d")} — ${format(now, "MMM d, yyyy")}`}
+          action={
             <div className="flex items-center gap-2">
               <Select value={compareMode} onValueChange={(v) => setCompareMode(v as "prev" | "custom")}>
-                <SelectTrigger className="w-[170px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prev">Compare: previous month</SelectItem>
-                  <SelectItem value="custom">Compare: custom range</SelectItem>
+                  <SelectItem value="prev">Сравнить: прошлый месяц</SelectItem>
+                  <SelectItem value="custom">Сравнить: свой период</SelectItem>
                 </SelectContent>
               </Select>
               {compareMode === "custom" && (
@@ -113,7 +114,8 @@ export const Finance = () => {
                 </div>
               )}
             </div>
-          </div>
+          }
+        >
           <div className="h-[280px]">
             <ResponsiveContainer>
               <AreaChart data={series} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -128,16 +130,15 @@ export const Finance = () => {
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, color: "hsl(var(--foreground))" }}
-                  formatter={(v: number) => [`$${v.toLocaleString()}`, "Income"]}
+                  formatter={(v: number) => [`$${v.toLocaleString()}`, "Доход"]}
                 />
                 <Area type="monotone" dataKey="income" stroke="hsl(var(--foreground))" strokeWidth={2} fill="url(#g)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </Panel>
+        </Widget>
 
-        <Panel>
-          <div className="text-sm font-medium mb-3">Recent transactions</div>
+        <Widget id="finance.tx" title="Последние операции" subtitle={`${transactions.length} всего`}>
           <div className="space-y-2 max-h-[300px] overflow-auto pr-1">
             {transactions.slice(0, 10).map((t) => (
               <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/50">
@@ -154,14 +155,15 @@ export const Finance = () => {
               </div>
             ))}
           </div>
-        </Panel>
+        </Widget>
       </div>
 
-      <Panel className="mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-sm font-medium">Completed deals (from CRM)</div>
-          <span className="text-xs text-muted-foreground">Auto-synced with payment receipts</span>
-        </div>
+      <Widget
+        id="finance.completed"
+        title="Закрытые сделки (из CRM)"
+        subtitle="Автоматически синхронизируются с чеками"
+        defaultCollapsed
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {completedDeals.map((d) => {
             const stage = stages.find((s) => s.id === d.stageId);
@@ -174,16 +176,17 @@ export const Finance = () => {
                 <div className="mt-1 font-medium">{d.title}</div>
                 <div className="mt-3 flex items-center justify-between">
                   <div className="text-lg font-semibold">${d.amount.toLocaleString()}</div>
-                  <div className="text-[10px] flex items-center gap-1 text-muted-foreground"><Receipt className="h-3 w-3" /> Receipt issued</div>
+                  <div className="text-[10px] flex items-center gap-1 text-muted-foreground"><Receipt className="h-3 w-3" /> Чек выписан</div>
                 </div>
               </div>
             );
           })}
         </div>
-      </Panel>
+      </Widget>
     </div>
   );
 };
+
 
 const AddSaleDialog = ({ open, setOpen, onAdd }: { open: boolean; setOpen: (b: boolean) => void; onAdd: (t: any) => void }) => {
   const [label, setLabel] = useState("");
@@ -192,21 +195,21 @@ const AddSaleDialog = ({ open, setOpen, onAdd }: { open: boolean; setOpen: (b: b
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Add sale</Button>
+        <Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Добавить операцию</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Record a transaction</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Новая операция</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label>Description</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Client name — Service" /></div>
+          <div><Label>Описание</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Клиент — услуга" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+            <div><Label>Сумма</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>
-              <Label>Type</Label>
+              <Label>Тип</Label>
               <Select value={type} onValueChange={(v) => setType(v as "income" | "expense")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">Доход</SelectItem>
+                  <SelectItem value="expense">Расход</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -217,7 +220,8 @@ const AddSaleDialog = ({ open, setOpen, onAdd }: { open: boolean; setOpen: (b: b
             if (!label || !amount) return;
             onAdd({ label, amount: Number(amount), type, date: new Date().toISOString(), receipt: type === "income" ? `RCPT-${1000 + Math.floor(Math.random() * 9000)}` : undefined });
             setLabel(""); setAmount(""); setOpen(false);
-          }}>Save</Button>
+          }}>Сохранить</Button>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>
