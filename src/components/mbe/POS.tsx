@@ -102,9 +102,10 @@ export const POS = () => {
   return (
     <div className="fade-in">
       <SectionHeader
-        title="POS Terminal"
-        subtitle="Tap to sell. Quantity in one tap, tech cards on call, ingredients auto-deducted."
+        title="Касса (POS)"
+        subtitle="Касание — продажа. Количество вводится в один тап, техкарта по запросу, ингредиенты списываются автоматически."
       />
+
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Product grid */}
