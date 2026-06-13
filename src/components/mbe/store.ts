@@ -148,6 +148,9 @@ export type AppSettings = {
   liveOrdersEnabled: boolean; // online kitchen/bar dashboard
 };
 
+export type WidgetState = Record<string, boolean>; // id → collapsed?
+
+
 const uid = () => Math.random().toString(36).slice(2, 9);
 const pin = () => Math.floor(10_000_000 + Math.random() * 89_999_999).toString();
 
