@@ -27,27 +27,27 @@ export const CRM = () => {
   const [calCtx, setCalCtx] = useState<{ client?: string; title?: string; dealId?: string }>({});
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-4">
       <SectionHeader
         title="CRM"
-        subtitle="Pipeline synced with Finance — completed deals issue receipts automatically. The calendar shows client-linked appointments and tasks."
+        subtitle="Воронка синхронизирована с Финансами — закрытые сделки сразу выписывают чек. Календарь показывает встречи и задачи по клиентам."
         action={
           <div className="flex items-center gap-2">
             <Button variant="secondary" className="h-9" onClick={() => { setCalCtx({}); setCalOpen(true); }}>
-              <CalendarDays className="h-4 w-4 mr-1" /> Client calendar
+              <CalendarDays className="h-4 w-4 mr-1" /> Календарь клиентов
             </Button>
             <CustomizeStages />
             <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Add deal</Button></DialogTrigger>
+              <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Новая сделка</Button></DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>New deal</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Новая сделка</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <div><Label>Client</Label><Input value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} /></div>
-                  <div><Label>Deal title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                  <div><Label>Клиент</Label><Input value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} /></div>
+                  <div><Label>Название сделки</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Amount</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+                    <div><Label>Сумма</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
                     <div>
-                      <Label>Stage</Label>
+                      <Label>Этап</Label>
                       <Select value={form.stageId} onValueChange={(v) => setForm({ ...form, stageId: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>{stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
@@ -58,16 +58,19 @@ export const CRM = () => {
                 <DialogFooter>
                   <Button onClick={() => {
                     if (!form.client) return;
-                    addDeal({ client: form.client, title: form.title || "Untitled", amount: Number(form.amount) || 0, stageId: form.stageId });
+                    addDeal({ client: form.client, title: form.title || "Без названия", amount: Number(form.amount) || 0, stageId: form.stageId });
                     setForm({ client: "", title: "", amount: "", stageId: stages[0]?.id });
                     setOpen(false);
-                  }}>Create</Button>
+                  }}>Создать</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         }
       />
+
+      <Widget id="crm.pipeline" title="Воронка продаж" subtitle={`${stages.length} этапов · ${deals.length} сделок`}>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
         {stages.map((stage) => {
