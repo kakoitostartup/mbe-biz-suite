@@ -171,6 +171,9 @@ type State = {
   paymentMethods: PaymentMethod[];
   settings: AppSettings;
   prepInstructions: Record<string, string>;
+  widgets: WidgetState;
+  toggleWidget: (id: string) => void;
+
 
   addStage: () => void;
   updateStage: (id: string, patch: Partial<Stage>) => void;
