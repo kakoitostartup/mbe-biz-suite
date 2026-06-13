@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore } from "./store";
-import { Panel, SectionHeader, Stat } from "./ui";
+import { Panel, SectionHeader, Stat, Widget } from "./ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Plus, Receipt, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO } from "date-fns";
+
 
 const ranges = { "7d": 7, "30d": 30, "90d": 90 } as const;
 type RangeKey = keyof typeof ranges;
