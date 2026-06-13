@@ -132,9 +132,10 @@ const CustomizeStages = () => {
   const { stages, updateStage, addStage, removeStage } = useStore();
   return (
     <Popover>
-      <PopoverTrigger asChild><Button variant="secondary" className="h-9"><Settings2 className="h-4 w-4 mr-1" /> Customize stages</Button></PopoverTrigger>
+      <PopoverTrigger asChild><Button variant="secondary" className="h-9"><Settings2 className="h-4 w-4 mr-1" /> Этапы</Button></PopoverTrigger>
       <PopoverContent className="w-[360px]">
-        <div className="text-sm font-medium mb-2">Pipeline stages</div>
+        <div className="text-sm font-medium mb-2">Этапы воронки</div>
+
         <div className="space-y-2 max-h-[320px] overflow-auto">
           {stages.map((s) => (
             <div key={s.id} className="flex items-center gap-2">
