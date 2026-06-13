@@ -195,21 +195,21 @@ const AddSaleDialog = ({ open, setOpen, onAdd }: { open: boolean; setOpen: (b: b
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Add sale</Button>
+        <Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Добавить операцию</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Record a transaction</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Новая операция</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label>Description</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Client name — Service" /></div>
+          <div><Label>Описание</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Клиент — услуга" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+            <div><Label>Сумма</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>
-              <Label>Type</Label>
+              <Label>Тип</Label>
               <Select value={type} onValueChange={(v) => setType(v as "income" | "expense")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">Доход</SelectItem>
+                  <SelectItem value="expense">Расход</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,7 +220,8 @@ const AddSaleDialog = ({ open, setOpen, onAdd }: { open: boolean; setOpen: (b: b
             if (!label || !amount) return;
             onAdd({ label, amount: Number(amount), type, date: new Date().toISOString(), receipt: type === "income" ? `RCPT-${1000 + Math.floor(Math.random() * 9000)}` : undefined });
             setLabel(""); setAmount(""); setOpen(false);
-          }}>Save</Button>
+          }}>Сохранить</Button>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>
