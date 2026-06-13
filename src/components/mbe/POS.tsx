@@ -337,7 +337,7 @@ const RecipeView = ({ itemId }: { itemId: string | null }) => {
   }
   return (
     <div className="rounded-lg bg-secondary/40 hairline p-3 space-y-1.5">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ingredients per serving</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ингредиенты на 1 порцию</div>
       {item.recipe.map((r, i) => {
         const inv = inventory.find((x) => x.id === r.itemId);
         return (
@@ -359,26 +359,28 @@ const BankConnectButton = ({ open, setOpen }: { open: boolean; setOpen: (v: bool
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="flex items-center gap-2 px-3 py-2 rounded-md text-xs bg-secondary/40 hairline border-dashed hover:bg-secondary text-muted-foreground border border-dashed">
-          <Plus className="h-3.5 w-3.5" /> Connect bank
+          <Plus className="h-3.5 w-3.5" /> Подключить банк
         </button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Connect bank / acquirer</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Подключение банка / эквайринга</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="text-xs text-muted-foreground">Hook up a bank or acquiring provider. Integration credentials can be wired up later — for now you can register the method label.</div>
-          <div><Label>Provider name</Label><Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Stripe, Sberbank, Tinkoff, Square…" /></div>
-          <div><Label>Display label</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Stripe card" /></div>
+          <div className="text-xs text-muted-foreground">Подключите банк или эквайринг. Ключи API можно ввести позже — пока зарегистрируем способ оплаты в кассе.</div>
+          <div><Label>Провайдер</Label><Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Stripe, Сбербанк, Тинькофф, Альфа…" /></div>
+          <div><Label>Название способа</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="например, «Карта Stripe»" /></div>
           <div className="rounded-md bg-secondary/40 hairline p-3 text-[11px] text-muted-foreground">
-            Future: OAuth flow / API keys per provider. Stored payment methods appear here automatically.
+            В будущем: OAuth / API-ключи на каждый банк. Привязанные способы появятся здесь автоматически.
           </div>
+
         </div>
         <DialogFooter>
           <Button onClick={() => {
             if (!name || !brand) return;
             addPaymentMethod({ kind: "bank", label: name, brand, enabled: true });
             setName(""); setBrand(""); setOpen(false);
-            toast({ title: "Provider added", description: `${brand} ready as a payment method.` });
-          }}>Add</Button>
+            toast({ title: "Провайдер добавлен", description: `${brand} доступен как способ оплаты.` });
+          }}>Добавить</Button>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>
