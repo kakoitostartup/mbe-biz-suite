@@ -107,12 +107,14 @@ export const CRM = () => {
                     </Select>
                   </div>
                 ))}
-                {stageDeals.length === 0 && <div className="text-xs text-muted-foreground py-6 text-center">No deals</div>}
+                {stageDeals.length === 0 && <div className="text-xs text-muted-foreground py-6 text-center">Нет сделок</div>}
               </div>
             </Panel>
           );
         })}
       </div>
+      </Widget>
+
 
       <CalendarDialog
         open={calOpen}
