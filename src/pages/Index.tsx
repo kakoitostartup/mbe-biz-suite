@@ -8,6 +8,8 @@ import { Reports } from "@/components/mbe/Reports";
 import { Profile } from "@/components/mbe/Misc";
 import { FinanceHub, TasksHub, SettingsHub } from "@/components/mbe/hubs";
 import { HeaderBell } from "@/components/mbe/HeaderBell";
+import { HeaderCalendar } from "@/components/mbe/HeaderCalendar";
+
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
