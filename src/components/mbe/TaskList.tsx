@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useStore } from "./store";
-import { Panel, SectionHeader } from "./ui";
+import { SectionHeader, Widget } from "./ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Clock, Trash2, Check } from "lucide-react";
 import { format, parseISO, isToday, isTomorrow, differenceInMinutes } from "date-fns";
+import { ru } from "date-fns/locale";
 
 export const TaskList = () => {
   const { tasks, addTask, toggleTask, removeTask } = useStore();
@@ -21,26 +22,26 @@ export const TaskList = () => {
 
   const labelFor = (iso: string) => {
     const d = parseISO(iso);
-    if (isToday(d)) return `Today • ${format(d, "h:mm a")}`;
-    if (isTomorrow(d)) return `Tomorrow • ${format(d, "h:mm a")}`;
-    return format(d, "EEE, MMM d • h:mm a");
+    if (isToday(d)) return `Сегодня • ${format(d, "HH:mm")}`;
+    if (isTomorrow(d)) return `Завтра • ${format(d, "HH:mm")}`;
+    return format(d, "EEE, d MMM • HH:mm", { locale: ru });
   };
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-4">
       <SectionHeader
-        title="Task List"
-        subtitle="Plan your day with deadlines and times."
+        title="Список задач"
+        subtitle="Планируйте день по дедлайнам и времени."
         action={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> New task</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Новая задача</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Create task</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Создать задачу</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>Task</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" /></div>
+                <div><Label>Задача</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Что нужно сделать?" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-                  <div><Label>Time</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
+                  <div><Label>Дата</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+                  <div><Label>Время</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
                 </div>
               </div>
               <DialogFooter>
@@ -48,7 +49,7 @@ export const TaskList = () => {
                   if (!title) return;
                   addTask({ title, due: new Date(`${date}T${time}`).toISOString() });
                   setTitle(""); setOpen(false);
-                }}>Add</Button>
+                }}>Добавить</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -56,44 +57,48 @@ export const TaskList = () => {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Panel className="lg:col-span-2">
-          <div className="text-sm font-medium mb-3">Upcoming</div>
-          <div className="space-y-2">
-            {upcoming.map((t) => {
-              const mins = differenceInMinutes(parseISO(t.due), new Date());
-              const overdue = mins < 0;
-              return (
-                <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hairline">
-                  <button onClick={() => toggleTask(t.id)} className="h-6 w-6 rounded-md border border-border grid place-items-center hover:bg-foreground hover:text-background transition-colors">
-                    <Check className="h-3 w-3 opacity-0 hover:opacity-100" />
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{t.title}</div>
-                    <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {labelFor(t.due)}</div>
+        <Widget id="tasks.upcoming" className="lg:col-span-2" title="Предстоящие" subtitle={`${upcoming.length} активных`}>
+          {upcoming.length === 0 ? (
+            <div className="text-xs text-muted-foreground py-8 text-center">Всё чисто ✦</div>
+          ) : (
+            <div className="space-y-2">
+              {upcoming.map((t) => {
+                const mins = differenceInMinutes(parseISO(t.due), new Date());
+                const overdue = mins < 0;
+                return (
+                  <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hairline">
+                    <button onClick={() => toggleTask(t.id)} className="h-6 w-6 rounded-md border border-border grid place-items-center hover:bg-foreground hover:text-background transition-colors">
+                      <Check className="h-3 w-3 opacity-0 hover:opacity-100" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{t.title}</div>
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {labelFor(t.due)}</div>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${overdue ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`}>
+                      {overdue ? "просрочено" : mins < 60 ? `${mins}м` : mins < 1440 ? `${Math.round(mins / 60)}ч` : `${Math.round(mins / 1440)}д`}
+                    </span>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeTask(t.id)}><Trash2 className="h-3 w-3" /></Button>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${overdue ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`}>
-                    {overdue ? "overdue" : mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.round(mins / 60)}h` : `${Math.round(mins / 1440)}d`}
-                  </span>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeTask(t.id)}><Trash2 className="h-3 w-3" /></Button>
-                </div>
-              );
-            })}
-            {upcoming.length === 0 && <div className="text-xs text-muted-foreground py-8 text-center">All clear ✦</div>}
-          </div>
-        </Panel>
+                );
+              })}
+            </div>
+          )}
+        </Widget>
 
-        <Panel>
-          <div className="text-sm font-medium mb-3">Completed</div>
-          <div className="space-y-2">
-            {done.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/30 opacity-60">
-                <button onClick={() => toggleTask(t.id)} className="h-5 w-5 rounded-md bg-foreground text-background grid place-items-center"><Check className="h-3 w-3" /></button>
-                <div className="text-xs line-through truncate flex-1">{t.title}</div>
-              </div>
-            ))}
-            {done.length === 0 && <div className="text-xs text-muted-foreground py-6 text-center">Nothing yet</div>}
-          </div>
-        </Panel>
+        <Widget id="tasks.done" title="Завершённые" subtitle={`${done.length}`} defaultCollapsed>
+          {done.length === 0 ? (
+            <div className="text-xs text-muted-foreground py-6 text-center">Пока ничего</div>
+          ) : (
+            <div className="space-y-2">
+              {done.map((t) => (
+                <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/30 opacity-60">
+                  <button onClick={() => toggleTask(t.id)} className="h-5 w-5 rounded-md bg-foreground text-background grid place-items-center"><Check className="h-3 w-3" /></button>
+                  <div className="text-xs line-through truncate flex-1">{t.title}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Widget>
       </div>
     </div>
   );
