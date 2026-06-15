@@ -9,7 +9,7 @@ import { Plus, Clock, Trash2, Check } from "lucide-react";
 import { format, parseISO, isToday, isTomorrow, differenceInMinutes } from "date-fns";
 import { ru } from "date-fns/locale";
 
-export const TaskList = () => {
+export const TaskList = ({ hideAdd = false }: { hideAdd?: boolean }) => {
   const { tasks, addTask, toggleTask, removeTask } = useStore();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -32,7 +32,7 @@ export const TaskList = () => {
       <SectionHeader
         title="Список задач"
         subtitle="Планируйте день по дедлайнам и времени."
-        action={
+        action={!hideAdd && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Новая задача</Button></DialogTrigger>
             <DialogContent>
@@ -53,7 +53,7 @@ export const TaskList = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        }
+        )}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

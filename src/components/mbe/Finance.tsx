@@ -15,7 +15,7 @@ import { format, subDays, startOfMonth, endOfMonth, subMonths, isWithinInterval,
 const ranges = { "7d": 7, "30d": 30, "90d": 90 } as const;
 type RangeKey = keyof typeof ranges;
 
-export const Finance = () => {
+export const Finance = ({ hideAdd = false }: { hideAdd?: boolean }) => {
   const { transactions, addTransaction, deals, stages } = useStore();
   const [range, setRange] = useState<RangeKey>("30d");
   const [compareMode, setCompareMode] = useState<"prev" | "custom">("prev");
@@ -80,7 +80,7 @@ export const Finance = () => {
                 <TabsTrigger value="90d">90д</TabsTrigger>
               </TabsList>
             </Tabs>
-            <AddSaleDialog open={open} setOpen={setOpen} onAdd={addTransaction} />
+            {!hideAdd && <AddSaleDialog open={open} setOpen={setOpen} onAdd={addTransaction} />}
           </div>
         }
       />
