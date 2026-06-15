@@ -9,53 +9,41 @@ import { Reports } from "./Reports";
 import { Profile, SettingsPage } from "./Misc";
 import { Premium } from "./Premium";
 import { Referral } from "./Referral";
+import {
+  AddTransactionForm, FinanceCategories, CustomersList, AddCustomerForm,
+  AddDealForm, StagesEditor, SalesHistory, Loyalty, AddTaskForm, StaffInvites,
+} from "./Features";
 import { ModuleId } from "./navStore";
-import { Construction } from "lucide-react";
-
-const Stub = ({ title, hint }: { title: string; hint?: string }) => (
-  <div className="fade-in">
-    <div className="mb-6">
-      <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-      {hint && <p className="text-sm text-muted-foreground mt-1">{hint}</p>}
-    </div>
-    <div className="rounded-2xl bg-card hairline p-10 grid place-items-center text-center">
-      <Construction className="h-10 w-10 text-muted-foreground mb-3" />
-      <div className="text-sm text-muted-foreground max-w-md">
-        Этот раздел в разработке. Каркас навигации готов — здесь появится форма / таблица / виджеты для «{title}».
-      </div>
-    </div>
-  </div>
-);
 
 type Key = `${ModuleId}.${string}`;
 
 const map: Partial<Record<Key, () => JSX.Element>> = {
   // Finance
-  "finance.dashboard": () => <Finance />,
-  "finance.add-sale": () => <Finance />,
-  "finance.add-expense": () => <Finance />,
-  "finance.reports": () => <Reports />,
-  "finance.categories": () => <Stub title="Категории доходов и расходов" hint="Управление категориями операций." />,
+  "finance.dashboard":  () => <Finance hideAdd />,
+  "finance.add-sale":   () => <AddTransactionForm defaultType="income" />,
+  "finance.add-expense":() => <AddTransactionForm defaultType="expense" />,
+  "finance.reports":    () => <Reports focus="sales" />,
+  "finance.categories": () => <FinanceCategories />,
   // Inventory
-  "inventory.arrivals": () => <Inventory />,
-  "inventory.sales": () => <Inventory />,
-  "inventory.stock": () => <Inventory />,
-  "inventory.critical": () => <Inventory />,
-  "inventory.recipes": () => <Inventory />,
-  "inventory.suppliers": () => <Stub title="Поставщики" hint="База поставщиков и условия поставок." />,
+  "inventory.arrivals": () => <Inventory view="arrivals" />,
+  "inventory.sales":    () => <Inventory view="sales" />,
+  "inventory.stock":    () => <Inventory view="stock" />,
+  "inventory.critical": () => <Inventory view="critical" />,
+  "inventory.recipes":  () => <Inventory view="recipes" />,
+  "inventory.suppliers":() => <Inventory view="suppliers" />,
   // CRM
-  "crm.pipeline": () => <CRM />,
-  "crm.customers": () => <CRM />,
-  "crm.add-customer": () => <CRM />,
-  "crm.add-deal": () => <CRM />,
-  "crm.stages": () => <Stub title="Настройка статусов" hint="Цвета и порядок этапов воронки." />,
+  "crm.pipeline":     () => <CRM />,
+  "crm.customers":    () => <CustomersList />,
+  "crm.add-customer": () => <AddCustomerForm />,
+  "crm.add-deal":     () => <AddDealForm />,
+  "crm.stages":       () => <StagesEditor />,
   // POS
   "pos.new-sale": () => <POS />,
-  "pos.history": () => <Stub title="История продаж" hint="Чеки и операции из кассы." />,
-  "pos.reports": () => <Reports />,
-  "pos.loyalty": () => <Stub title="Бонусные карты" hint="Привязка карт лояльности к клиентам CRM." />,
+  "pos.history":  () => <SalesHistory />,
+  "pos.reports":  () => <Reports focus="sales" />,
+  "pos.loyalty":  () => <Loyalty />,
   // Tasks
-  "tasks.my": () => <TaskList />,
+  "tasks.my":  () => <TaskList />,
   "tasks.all": () => <TaskList />,
   "tasks.calendar": () => (
     <div className="fade-in">
@@ -66,25 +54,31 @@ const map: Partial<Record<Key, () => JSX.Element>> = {
       <div className="rounded-2xl bg-card hairline p-5"><CalendarBoard /></div>
     </div>
   ),
-  "tasks.add": () => <TaskList />,
+  "tasks.add": () => <AddTaskForm />,
   // Staff
-  "staff.list": () => <StaffPage />,
-  "staff.kpi": () => <StaffPage />,
-  "staff.invites": () => <Stub title="Приглашения" hint="Пригласите сотрудника по e-mail." />,
+  "staff.list":    () => <StaffPage />,
+  "staff.kpi":     () => <StaffPage focus="kpi" hideAdd />,
+  "staff.invites": () => <StaffInvites />,
   // Reports
-  "reports.overview": () => <Reports />,
-  "reports.revision": () => <Reports />,
-  "reports.sales": () => <Reports />,
+  "reports.overview": () => <Reports focus="overview" />,
+  "reports.revision": () => <Reports focus="revision" />,
+  "reports.sales":    () => <Reports focus="sales" />,
   // Settings
-  "settings.profile": () => <Profile />,
-  "settings.subscription": () => <Premium />,
-  "settings.referral": () => <Referral />,
+  "settings.profile":       () => <Profile />,
+  "settings.subscription":  () => <Premium />,
+  "settings.referral":      () => <Referral />,
   "settings.notifications": () => <SettingsPage />,
 };
 
 export const FeatureRenderer = ({ moduleId, featureId }: { moduleId: ModuleId; featureId: string }) => {
   const key = `${moduleId}.${featureId}` as Key;
   const Comp = map[key];
-  if (!Comp) return <Stub title="Скоро" hint="Эта фича появится позже." />;
+  if (!Comp) {
+    return (
+      <div className="fade-in rounded-2xl bg-card hairline p-10 text-center text-sm text-muted-foreground">
+        Раздел в разработке.
+      </div>
+    );
+  }
   return <Comp />;
 };

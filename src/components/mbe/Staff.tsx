@@ -20,7 +20,7 @@ const ROLE_COLORS: Record<StaffRole, string> = {
   sales: "stage-completed",
 };
 
-export const StaffPage = () => {
+export const StaffPage = ({ hideAdd = false, focus = "all" }: { hideAdd?: boolean; focus?: "all" | "kpi" }) => {
   const { staff, shifts, deals, addStaff, removeStaff, resetPin, updateStaff, clockIn, clockOut } = useStore();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -66,9 +66,9 @@ export const StaffPage = () => {
   return (
     <div className="fade-in">
       <SectionHeader
-        title="Staff"
-        subtitle="Active shifts, KPIs, PINs and access management."
-        action={
+        title={focus === "kpi" ? "KPI и показатели" : "Сотрудники"}
+        subtitle={focus === "kpi" ? "Показатели по продажам и сменам." : "Активные смены, PIN-коды, доступы."}
+        action={!hideAdd && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="h-9"><Plus className="h-4 w-4 mr-1" /> Add staff</Button></DialogTrigger>
             <DialogContent>
@@ -97,7 +97,7 @@ export const StaffPage = () => {
               <DialogFooter><Button onClick={submit}>Create</Button></DialogFooter>
             </DialogContent>
           </Dialog>
-        }
+        )}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

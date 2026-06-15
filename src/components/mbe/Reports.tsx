@@ -11,10 +11,10 @@ type Period = "day" | "week" | "month" | "halfyear" | "year";
 
 const LABELS: Record<Period, string> = { day: "Today", week: "This week", month: "This month", halfyear: "Last 6 months", year: "This year" };
 
-export const Reports = () => {
+export const Reports = ({ focus = "overview" }: { focus?: "overview" | "revision" | "sales" }) => {
   const { receipts, transactions, deals } = useStore();
   const [period, setPeriod] = useState<Period>("week");
-  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(focus === "revision");
 
   const inPeriod = (iso: string) => {
     const d = parseISO(iso);
@@ -71,15 +71,10 @@ export const Reports = () => {
   return (
     <div className="fade-in">
       <SectionHeader
-        title="Reports"
-        subtitle="Performance breakdowns by day, week, month, half-year and year."
+        title={focus === "sales" ? "Отчёт по продажам" : focus === "revision" ? "Ревизия склада" : "Отчёты"}
+        subtitle="Срезы по дню, неделе, месяцу, полугодию и году."
         action={
-          <div className="flex gap-2">
-            <Button variant="secondary" className="h-9" onClick={() => setAuditOpen(true)}>
-              <ClipboardCheck className="h-4 w-4 mr-1" /> Ревизия
-            </Button>
-            <Button variant="secondary" className="h-9" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
-          </div>
+          <Button variant="secondary" className="h-9" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> Экспорт CSV</Button>
         }
       />
 
