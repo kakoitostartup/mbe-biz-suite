@@ -47,7 +47,11 @@ export type Task = {
   done: boolean;
   dealId?: string; // CRM-linked task
   client?: string; // CRM-linked
+  projectId?: string; // Project-linked task
+  status?: "todo" | "in_progress" | "done"; // for project board
+  assignee?: string; // staff id
 };
+
 
 export type Customer = {
   id: string;

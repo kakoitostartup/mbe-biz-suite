@@ -1,14 +1,18 @@
 import { create } from "zustand";
 
 export type ModuleId =
-  | "finance"
-  | "inventory"
+  | "overview"
+  | "services"
+  | "bookings"
   | "crm"
   | "tasks"
+  | "finance"
   | "staff"
   | "reports"
-  | "pos"
-  | "settings";
+  | "settings"
+  // legacy (kept for type-compat with archived components)
+  | "inventory"
+  | "pos";
 
 type NavState = {
   activeModule: ModuleId;
@@ -20,18 +24,21 @@ type NavState = {
 };
 
 const defaults: Record<ModuleId, string> = {
-  finance: "dashboard",
-  inventory: "arrivals",
-  crm: "pipeline",
+  overview: "dashboard",
+  services: "list",
+  bookings: "list",
+  crm: "customers",
   tasks: "my",
+  finance: "dashboard",
   staff: "list",
   reports: "overview",
-  pos: "new-sale",
   settings: "profile",
+  inventory: "stock",
+  pos: "new-sale",
 };
 
 export const useNav = create<NavState>((set) => ({
-  activeModule: "finance",
+  activeModule: "overview",
   activeFeature: { ...defaults },
   mobileOpen: false,
   setModule: (m) => set({ activeModule: m, mobileOpen: false }),

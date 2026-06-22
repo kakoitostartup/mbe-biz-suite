@@ -1,7 +1,5 @@
 import { Finance } from "./Finance";
-import { Inventory } from "./Inventory";
 import { CRM } from "./CRM";
-import { POS } from "./POS";
 import { TaskList } from "./TaskList";
 import { CalendarBoard } from "./Calendar";
 import { StaffPage } from "./Staff";
@@ -11,40 +9,45 @@ import { Premium } from "./Premium";
 import { Referral } from "./Referral";
 import {
   AddTransactionForm, FinanceCategories, CustomersList, AddCustomerForm,
-  AddDealForm, StagesEditor, SalesHistory, Loyalty, AddTaskForm, StaffInvites,
+  AddTaskForm, StaffInvites,
 } from "./Features";
+import { Overview } from "./Overview";
+import { BookingsPage } from "./Bookings";
+import { ServicesPage } from "./Services";
+import { ProjectsPage } from "./Projects";
 import { ModuleId } from "./navStore";
 
 type Key = `${ModuleId}.${string}`;
 
 const map: Partial<Record<Key, () => JSX.Element>> = {
+  // Overview
+  "overview.dashboard": () => <Overview />,
+
+  // Services
+  "services.list": () => <ServicesPage />,
+  "services.add":  () => <ServicesPage focus="add" />,
+
+  // Bookings
+  "bookings.list":      () => <BookingsPage focus="list" />,
+  "bookings.new":       () => <BookingsPage focus="new" />,
+  "bookings.broadcast": () => <BookingsPage focus="broadcast" />,
+
   // Finance
   "finance.dashboard":  () => <Finance hideAdd />,
   "finance.add-sale":   () => <AddTransactionForm defaultType="income" />,
   "finance.add-expense":() => <AddTransactionForm defaultType="expense" />,
   "finance.reports":    () => <Reports focus="sales" />,
   "finance.categories": () => <FinanceCategories />,
-  // Inventory
-  "inventory.arrivals": () => <Inventory view="arrivals" />,
-  "inventory.sales":    () => <Inventory view="sales" />,
-  "inventory.stock":    () => <Inventory view="stock" />,
-  "inventory.critical": () => <Inventory view="critical" />,
-  "inventory.recipes":  () => <Inventory view="recipes" />,
-  "inventory.suppliers":() => <Inventory view="suppliers" />,
-  // CRM
+
+  // CRM (clients)
   "crm.pipeline":     () => <CRM />,
   "crm.customers":    () => <CustomersList />,
   "crm.add-customer": () => <AddCustomerForm />,
-  "crm.add-deal":     () => <AddDealForm />,
-  "crm.stages":       () => <StagesEditor />,
-  // POS
-  "pos.new-sale": () => <POS />,
-  "pos.history":  () => <SalesHistory />,
-  "pos.reports":  () => <Reports focus="sales" />,
-  "pos.loyalty":  () => <Loyalty />,
+
   // Tasks
-  "tasks.my":  () => <TaskList />,
-  "tasks.all": () => <TaskList />,
+  "tasks.my":       () => <TaskList />,
+  "tasks.all":      () => <TaskList />,
+  "tasks.projects": () => <ProjectsPage />,
   "tasks.calendar": () => (
     <div className="fade-in">
       <div className="mb-6">
@@ -55,14 +58,16 @@ const map: Partial<Record<Key, () => JSX.Element>> = {
     </div>
   ),
   "tasks.add": () => <AddTaskForm />,
+
   // Staff
   "staff.list":    () => <StaffPage />,
   "staff.kpi":     () => <StaffPage focus="kpi" hideAdd />,
   "staff.invites": () => <StaffInvites />,
+
   // Reports
   "reports.overview": () => <Reports focus="overview" />,
-  "reports.revision": () => <Reports focus="revision" />,
   "reports.sales":    () => <Reports focus="sales" />,
+
   // Settings
   "settings.profile":       () => <Profile />,
   "settings.subscription":  () => <Premium />,
