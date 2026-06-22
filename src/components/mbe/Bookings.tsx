@@ -185,13 +185,14 @@ const BroadcastDialog = ({
   }, [bookings]);
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       const init: Record<string, boolean> = {};
       (defaultIds ?? candidates.map((c) => c.id)).forEach((id) => (init[id] = true));
       setSelected(init);
     }
   }, [open, defaultIds]);
+
 
   const send = () => {
     const list = bookings.filter((b) => selected[b.id]);
