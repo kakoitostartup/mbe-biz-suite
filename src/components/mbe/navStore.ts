@@ -2,16 +2,16 @@ import { create } from "zustand";
 
 export type ModuleId =
   | "overview"
-  | "services"
-  | "bookings"
+  | "finance"
+  | "inventory"
   | "crm"
   | "tasks"
-  | "finance"
   | "staff"
   | "reports"
   | "settings"
   // legacy (kept for type-compat with archived components)
-  | "inventory"
+  | "services"
+  | "bookings"
   | "pos";
 
 type NavState = {
@@ -23,26 +23,41 @@ type NavState = {
   setMobileOpen: (b: boolean) => void;
 };
 
-const defaults: Record<ModuleId, string> = {
+export const defaultFeatures: Record<ModuleId, string> = {
   overview: "dashboard",
-  services: "list",
-  bookings: "list",
+  finance: "dashboard",
+  inventory: "stock",
   crm: "customers",
   tasks: "my",
-  finance: "dashboard",
   staff: "list",
   reports: "overview",
   settings: "profile",
-  inventory: "stock",
+  services: "list",
+  bookings: "list",
   pos: "new-sale",
 };
 
 export const useNav = create<NavState>((set) => ({
   activeModule: "overview",
-  activeFeature: { ...defaults },
+  activeFeature: { ...defaultFeatures },
   mobileOpen: false,
   setModule: (m) => set({ activeModule: m, mobileOpen: false }),
   setFeature: (m, f) =>
     set((s) => ({ activeFeature: { ...s.activeFeature, [m]: f }, mobileOpen: false })),
   setMobileOpen: (b) => set({ mobileOpen: b }),
+}));
+
+// ── Modal store (popup feature windows) ───────────────────────────────────
+type ModalState = {
+  moduleId: ModuleId | null;
+  featureId: string | null;
+  open: (moduleId: ModuleId, featureId: string) => void;
+  close: () => void;
+};
+
+export const useModal = create<ModalState>((set) => ({
+  moduleId: null,
+  featureId: null,
+  open: (moduleId, featureId) => set({ moduleId, featureId }),
+  close: () => set({ moduleId: null, featureId: null }),
 }));
