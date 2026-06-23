@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
-import { getModule } from "./modules";
-import { useNav } from "./navStore";
+import { getModule, isModalFeature } from "./modules";
+import { useNav, useModal } from "./navStore";
 
 export const FeaturesPanel = () => {
   const { activeModule, activeFeature, setFeature } = useNav();
+  const openModal = useModal((s) => s.open);
   const mod = getModule(activeModule);
   const current = activeFeature[activeModule];
 
@@ -21,11 +22,15 @@ export const FeaturesPanel = () => {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {mod.features.map((f) => {
           const Icon = f.icon;
-          const isActive = current === f.id;
+          const asModal = isModalFeature(mod.id, f.id);
+          const isActive = !asModal && current === f.id;
           return (
             <button
               key={f.id}
-              onClick={() => setFeature(mod.id, f.id)}
+              onClick={() => {
+                if (asModal) openModal(mod.id, f.id);
+                else setFeature(mod.id, f.id);
+              }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors",
                 isActive
@@ -35,6 +40,11 @@ export const FeaturesPanel = () => {
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{f.label}</span>
+              {asModal && (
+                <span className="ml-auto text-[9px] uppercase tracking-widest text-muted-foreground/70">
+                  окно
+                </span>
+              )}
               {isActive && (
                 <span className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground/70" />
               )}
