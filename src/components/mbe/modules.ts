@@ -1,10 +1,9 @@
 import {
   LayoutDashboard,
-  Scissors,
-  CalendarCheck,
+  Wallet,
+  Package,
   Users,
   ListChecks,
-  Wallet,
   UserCog,
   FileBarChart2,
   Settings,
@@ -14,16 +13,15 @@ import {
   FileText,
   Tags,
   UserPlus,
-  CalendarDays,
+  CalendarCheck,
   KanbanSquare,
   BarChart3,
-  Send,
-  Sparkles,
   User as UserIcon,
   Crown,
   Share2,
   Bell,
   Briefcase,
+  Scissors,
   type LucideIcon,
 } from "lucide-react";
 import { ModuleId } from "./navStore";
@@ -47,31 +45,33 @@ export const modules: ModuleDef[] = [
     label: "Обзор",
     icon: LayoutDashboard,
     features: [
-      { id: "dashboard", label: "Главная", icon: Sparkles },
+      { id: "dashboard", label: "Главная", icon: LayoutDashboard },
     ],
   },
   {
-    id: "services",
-    label: "Услуги",
-    icon: Scissors,
+    id: "finance",
+    label: "Финансы",
+    icon: Wallet,
     features: [
-      { id: "list", label: "Список услуг", icon: Scissors },
-      { id: "add", label: "Добавить услугу", icon: PlusCircle },
+      { id: "dashboard", label: "Выручка и расходы", icon: TrendingUp },
+      { id: "add-sale", label: "Добавить продажу", icon: PlusCircle },
+      { id: "add-expense", label: "Добавить расход", icon: MinusCircle },
+      { id: "reports", label: "Отчёты (P&L)", icon: FileText },
+      { id: "categories", label: "Категории", icon: Tags },
     ],
   },
   {
-    id: "bookings",
-    label: "Записи",
-    icon: CalendarCheck,
+    id: "inventory",
+    label: "Склад",
+    icon: Package,
     features: [
-      { id: "list", label: "Все записи", icon: CalendarCheck },
-      { id: "new", label: "Создать запись", icon: PlusCircle },
-      { id: "broadcast", label: "Рассылка в WhatsApp", icon: Send },
+      { id: "stock", label: "Список расходников", icon: Package },
+      { id: "critical", label: "Заканчивается", icon: Bell },
     ],
   },
   {
     id: "crm",
-    label: "Клиенты",
+    label: "CRM",
     icon: Users,
     features: [
       { id: "customers", label: "Список клиентов", icon: Users },
@@ -87,20 +87,8 @@ export const modules: ModuleDef[] = [
       { id: "my", label: "Мои задачи", icon: ListChecks },
       { id: "all", label: "Все задачи", icon: Users },
       { id: "projects", label: "Проекты", icon: Briefcase },
-      { id: "calendar", label: "Календарь", icon: CalendarDays },
+      { id: "bookings", label: "Записи", icon: CalendarCheck },
       { id: "add", label: "Добавить задачу", icon: PlusCircle },
-    ],
-  },
-  {
-    id: "finance",
-    label: "Финансы",
-    icon: Wallet,
-    features: [
-      { id: "dashboard", label: "Выручка и расходы", icon: TrendingUp },
-      { id: "add-sale", label: "Добавить доход", icon: PlusCircle },
-      { id: "add-expense", label: "Добавить расход", icon: MinusCircle },
-      { id: "reports", label: "Отчёты (P&L)", icon: FileText },
-      { id: "categories", label: "Категории", icon: Tags },
     ],
   },
   {
@@ -128,7 +116,8 @@ export const modules: ModuleDef[] = [
     icon: Settings,
     features: [
       { id: "profile", label: "Профиль", icon: UserIcon },
-      { id: "subscription", label: "Тариф", icon: Crown },
+      { id: "subscription", label: "Подписка", icon: Crown },
+      { id: "services", label: "Услуги", icon: Scissors },
       { id: "referral", label: "Рефералы", icon: Share2 },
       { id: "notifications", label: "Уведомления", icon: Bell },
     ],
@@ -136,3 +125,19 @@ export const modules: ModuleDef[] = [
 ];
 
 export const getModule = (id: ModuleId) => modules.find((m) => m.id === id)!;
+
+/**
+ * Features that should open as a centered modal popup over the module's
+ * default page, instead of replacing the main content.
+ */
+export const MODAL_FEATURES: Record<string, { title: string }> = {
+  "finance.add-sale":     { title: "Добавить продажу" },
+  "finance.add-expense":  { title: "Добавить расход" },
+  "finance.categories":   { title: "Категории" },
+  "crm.add-customer":     { title: "Добавить клиента" },
+  "tasks.add":            { title: "Новая задача" },
+  "staff.invites":        { title: "Пригласить сотрудника" },
+};
+
+export const isModalFeature = (moduleId: string, featureId: string) =>
+  !!MODAL_FEATURES[`${moduleId}.${featureId}`];
