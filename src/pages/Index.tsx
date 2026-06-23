@@ -1,8 +1,8 @@
 import { ModuleSidebar } from "@/components/mbe/ModuleSidebar";
 import { FeaturesPanel } from "@/components/mbe/FeaturesPanel";
 import { FeatureRenderer } from "@/components/mbe/FeatureRenderer";
+import { FeatureModal } from "@/components/mbe/FeatureModal";
 import { HeaderBell } from "@/components/mbe/HeaderBell";
-import { HeaderCalendar } from "@/components/mbe/HeaderCalendar";
 import { useNav } from "@/components/mbe/navStore";
 import { Search, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,6 @@ const Index = () => {
             />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <HeaderCalendar />
             <HeaderBell />
             <div className="h-9 w-9 rounded-lg bg-primary text-primary-foreground grid place-items-center text-xs font-semibold">
               AM
@@ -74,6 +73,8 @@ const Index = () => {
           />
         </main>
       </div>
+
+      <FeatureModal />
     </div>
   );
 };
